@@ -1,0 +1,34 @@
+// src/seed.ts
+import 'reflect-metadata';
+import { DataSource } from 'typeorm';
+import { User } from './users/user.entity';
+import { Role } from './users/role.enum';
+import * as bcrypt from 'bcrypt';
+
+const ds = new DataSource({
+  type: 'postgres',
+  host: process.env.DB_HOST,
+  port: parseInt(process.env.DB_PORT || '5432', 10),
+  username: process.env.DB_USERNAME,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  entities: [User],
+  synchronize: false,
+});
+
+async function run() {
+  await ds.initialize();
+  const repo = ds.getRepository(User);
+  const email = 'ralph.foentjies@ricoh.co.za';
+  const exists = await repo.findOne({ where: { email } });
+  if (!exists) {
+    const passwordHash = await bcrypt.hash('ChangeMe123!', parseInt(process.env.BCRYPT_SALT_ROUNDS || '12', 10));
+    const u = repo.create({ email, role: Role.SUPERVISOR, isActive: true, passwordHash });
+    await repo.save(u);
+    console.log('Seeded user:', email);
+  } else {
+    console.log('User already exists:', email);
+  }
+  await ds.destroy();
+}
+run().catch((e) => { console.error(e); process.exit(1); });
