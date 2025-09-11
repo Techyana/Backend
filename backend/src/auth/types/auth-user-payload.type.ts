@@ -4,4 +4,5 @@ export interface AuthUserPayload {
   email: string;
   role: string;
   mustChangePassword: boolean;
+  isActive: boolean;
 }

@@ -1,0 +1,7 @@
+// src/entities/part-status.enum.ts
+export enum PartStatus {
+  AVAILABLE = 'AVAILABLE',
+  USED = 'USED',
+  REQUESTED = 'REQUESTED',
+  PENDING_COLLECTION = 'PENDING_COLLECTION',
+}

@@ -1,0 +1,86 @@
+(Role.ADMIN, Role.SUPERVISOR, Role.ENGINEER)
+  @ApiTags('Parts', 'Read')
+  @ApiOperation({ summary: 'Retrieve all parts' })
+  @ApiResponse({ status: 200, description: 'Array of parts', type: [Part] })
+  @ApiResponse({ status: 401, description: 'Unauthorized', type: ErrorResponseDto })
+  @ApiResponse({ status: 403, description: 'Forbidden', type: ErrorResponseDto })
+  async findAll(): Promise<Part[]> {
+    return this.partsService.findAll();
+  }
+
+  @Get(':id')
+  @Roles(Role.ADMIN, Role.SUPERVISOR, Role.ENGINEER)
+  @ApiTags('Parts', 'Read')
+  @ApiOperation({ summary: 'Retrieve a part by its UUID' })
+  @ApiParam({ name: 'id', description: 'Part UUID', type: String })
+  @ApiResponse({ status: 200, description: 'Part found', type: Part })
+  @ApiResponse({ status: 400, description: 'Invalid UUID', type: ErrorResponseDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized', type: ErrorResponseDto })
+  @ApiResponse({ status: 403, description: 'Forbidden', type: ErrorResponseDto })
+  @ApiResponse({ status: 404, description: 'Part not found', type: ErrorResponseDto })
+  async findOne(
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ): Promise<Part> {
+    return this.partsService.findOne(id);
+  }
+
+  @Put(':id')
+  @Roles(Role.ADMIN)
+  @ApiTags('Parts', 'Admin')
+  @ApiOperation({ summary: 'Update a part by its UUID' })
+  @ApiParam({ name: 'id', description: 'Part UUID', type: String })
+  @ApiBody({ type: UpdatePartDto })
+  @ApiResponse({ status: 200, description: 'Part updated', type: Part })
+  @ApiResponse({ status: 400, description: 'Validation error', type: ErrorResponseDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized', type: ErrorResponseDto })
+  @ApiResponse({ status: 403, description: 'Forbidden', type: ErrorResponseDto })
+  @ApiResponse({ status: 404, description: 'Part not found', type: ErrorResponseDto })
+  async update(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() dto: UpdatePartDto,
+  ): Promise<Part> {
+    return this.partsService.update(id, dto);
+  }
+
+  @Delete(':id')
+  @Roles(Role.ADMIN)
+  @ApiTags('Parts', 'Admin')
+  @ApiOperation({ summary: 'Delete a part by its UUID' })
+  @ApiParam({ name: 'id', description: 'Part UUID', type: String })
+  @ApiResponse({ status: 204, description: 'Part deleted' })
+  @ApiResponse({ status: 400, description: 'Invalid UUID', type: ErrorResponseDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized', type: ErrorResponseDto })
+  @ApiResponse({ status: 403, description: 'Forbidden', type: ErrorResponseDto })
+  @ApiResponse({ status: 404, description: 'Part not found', type: ErrorResponseDto })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async remove(
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ): Promise<void> {
+    return this.partsService.remove(id);
+  }
+
+  @Post(':id/claim')
+  @Roles(Role.ENGINEER)
+  @ApiTags('Parts', 'Claims')
+  @ApiOperation({ summary: 'Claim a part for the current user' })
+  @ApiParam({ name: 'id', description: 'Part UUID', type: String })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        engineerId: { type: 'string', description: 'UUID of the engineer' },
+      },
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Part claimed', type: Part })
+  @ApiResponse({ status: 400, description: 'Validation error', type: ErrorResponseDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized', type: ErrorResponseDto })
+  @ApiResponse({ status: 403, description: 'Forbidden', type: ErrorResponseDto })
+  @ApiResponse({ status: 404, description: 'Part not found', type: ErrorResponseDto })
+  async claimPart(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body('engineerId') engineerId: string,
+  ): Promise<Part> {
+    return this.partsService.claimPart(id, engineerId);
+  }
+}

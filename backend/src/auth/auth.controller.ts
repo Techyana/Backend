@@ -1,5 +1,3 @@
-// src/auth/auth.controller.ts
-
 import {
   Controller,
   Post,
@@ -57,21 +55,27 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<{ message: string; user: AuthUserPayload }> {
     // 1) Update password in DB
-    await this.authService.updatePassword(requestWithUser.user.id, updatePasswordDto);
+    await this.authService.updatePassword(
+      requestWithUser.user.id,
+      updatePasswordDto,
+    );
 
     // 2) Re-fetch the updated user
-    const updatedUser = await this.usersService.findById(requestWithUser.user.id);
+    const updatedUser = await this.usersService.findById(
+      requestWithUser.user.id,
+    );
     if (!updatedUser) {
       throw new NotFoundException('User not found after password change');
     }
 
-    // 3) Build the AuthUserPayload
+    // 3) Build the AuthUserPayload (now including isActive)
     const payload: AuthUserPayload = {
       id: updatedUser.id,
       name: updatedUser.name,
       email: updatedUser.email,
       role: updatedUser.role,
       mustChangePassword: updatedUser.mustChangePassword,
+      isActive: updatedUser.isActive,
     };
 
     // 4) Issue fresh JWT & reset cookie

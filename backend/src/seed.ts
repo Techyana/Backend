@@ -6,7 +6,7 @@ import 'reflect-metadata';
 import { Role } from './users/role.enum';
 import bcrypt from 'bcrypt';
 import { DeepPartial } from 'typeorm';
-import { AppDataSource as ds } from './data-source';
+import ds from './data-source';
 import { User } from './users/user.entity';
 
 ConfigModule.forRoot({ isGlobal: true });

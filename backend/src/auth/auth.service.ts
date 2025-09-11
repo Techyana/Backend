@@ -34,7 +34,8 @@ export class AuthService {
   ) {}
 
   /**
-   * Central JWT creation, sealed with your module’s secret & expiry.
+   * Sign a JWT so that `sub`=user.id and the rest of your
+   * AuthUserPayload fields end up as custom claims.
    */
   async generateAccessToken(payload: AuthUserPayload): Promise<string> {
     const secret = this.configService.get<string>('JWT_SECRET');
@@ -42,15 +43,24 @@ export class AuthService {
       throw new Error('Missing JWT_SECRET in configuration');
     }
 
-    // Optionally pull in an expiration setting, or remove if configured at module-level
     const expiresIn =
       this.configService.get<string | number>('JWT_EXPIRES_IN') ?? '1h';
 
-    return this.jwtService.signAsync(payload, { secret, expiresIn });
+    // Split out `id` into the official "sub" claim
+    const { id, email, role, mustChangePassword, isActive } = payload;
+
+    return this.jwtService.signAsync(
+      { email, role, mustChangePassword, isActive },
+      {
+        secret,
+        expiresIn,
+        subject: id,         // ← your userId
+      },
+    );
   }
 
   /**
-   * Validate user credentials, fire off welcome mail, return token + user DTO.
+   * Validate credentials, fire welcome mail, return token + safe user DTO.
    */
   async login(dto: LoginDto): Promise<LoginResponse> {
     const { email, password } = dto;
@@ -72,6 +82,7 @@ export class AuthService {
       email: user.email,
       role: user.role,
       mustChangePassword: user.mustChangePassword,
+      isActive: user.isActive,
     };
 
     const access_token = await this.generateAccessToken(payload);
@@ -80,6 +91,7 @@ export class AuthService {
 
   /**
    * Change password flow for logged-in users.
+   * Skips requiring `passwordCurrent` on forced first login.
    */
   async updatePassword(
     userId: string,
@@ -91,42 +103,40 @@ export class AuthService {
       throw new BadRequestException('Passwords do not match');
     }
 
-    // 1) Load the user
+    // 1) Load
     const user = await this.usersService.findById(userId);
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
-    // 2) Ensure we actually got a current password
-    if (!passwordCurrent) {
-      throw new BadRequestException('Current password is required');
+    // 2) If not first‐login, verify current password
+    if (!user.mustChangePassword) {
+      if (!passwordCurrent) {
+        throw new BadRequestException('Current password is required');
+      }
+      const valid = await bcrypt.compare(passwordCurrent, user.passwordHash);
+      if (!valid) {
+        throw new BadRequestException('Current password is incorrect');
+      }
+      // prevent reusing the same password
+      if (await bcrypt.compare(password, user.passwordHash)) {
+        throw new BadRequestException(
+          'New password must be different from the old one',
+        );
+      }
     }
 
-    // 3) Verify current password
-    const isCurrentValid = await bcrypt.compare(
-      passwordCurrent,
-      user.passwordHash,
-    );
-    if (!isCurrentValid) {
-      throw new BadRequestException('Current password is incorrect');
-    }
-
-    // 4) Ensure new password differs from old
-    if (await bcrypt.compare(password, user.passwordHash)) {
-      throw new BadRequestException(
-        'New password must be different from the old one',
-      );
-    }
-
-    // 5) Hash & persist
+    // 3) Hash & flip the flag
     const saltRounds = Number(
       this.configService.get<number>('BCRYPT_SALT_ROUNDS') ?? 10,
     );
     user.passwordHash = await bcrypt.hash(password, saltRounds);
     user.mustChangePassword = false;
+
+    // 4) Persist both columns in one go
     const savedUser = await this.usersService.save(user);
 
-    // 6) Fire-and-forget confirmation email
+    // 5) Fire confirmation mail
     this.mailService
       .sendPasswordChangeConfirmation(savedUser.email, savedUser.name)
       .catch(() => {});

@@ -1,0 +1,124 @@
+// src/parts/parts.service.ts
+
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common'
+import { InjectRepository } from '@nestjs/typeorm'
+import { Repository } from 'typeorm'
+import { Part } from '../entities/part.entity'
+import { CreatePartDto } from './dto/create-part.dto'
+import { UpdatePartDto } from './dto/update-part.dto'
+import { PartStatus } from '../entities/part-status.enum'
+
+@Injectable()
+export class PartsService {
+  constructor(
+    @InjectRepository(Part)
+    private readonly partRepo: Repository<Part>,
+  ) {}
+
+  async create(dto: CreatePartDto): Promise<Part> {
+    const part = this.partRepo.create({ ...dto, status: PartStatus.AVAILABLE })
+    return this.partRepo.save(part)
+  }
+
+  findAll(): Promise<Part[]> {
+    return this.partRepo.find({ relations: ['claimedBy'] })
+  }
+
+  findByStatus(status: PartStatus): Promise<Part[]> {
+    return this.partRepo.find({
+      where: { status },
+      relations: ['claimedBy'],
+    })
+  }
+
+  async findOne(id: string): Promise<Part> {
+    const part = await this.partRepo.findOne({
+      where: { id },
+      relations: ['claimedBy'],
+    })
+    if (!part) throw new NotFoundException('Part not found')
+    return part
+  }
+
+  async update(id: string, dto: UpdatePartDto): Promise<Part> {
+    const part = await this.findOne(id)
+    Object.assign(part, dto)
+    return this.partRepo.save(part)
+  }
+
+  async removeWithReason(
+    id: string,
+    userId: string,
+    userEmail: string,
+    reason: string,
+  ): Promise<void> {
+    const part = await this.findOne(id)
+    // (optionally log who/why/when)
+    await this.partRepo.remove(part)
+  }
+
+  /**
+   * ENGINEER: reserve an AVAILABLE part for pickup
+   */
+  async claimPart(
+    id: string,
+    userId: string,
+    userEmail: string,
+  ): Promise<Part> {
+    const part = await this.findOne(id)
+    
+
+    part.status = PartStatus.PENDING_COLLECTION
+    part.claimedBy = { id: userId } as any
+    part.claimedAt = new Date()
+
+    return this.partRepo.save(part)
+  }
+
+  /**
+   * ENGINEER: order a new part (not in stock)
+   */
+  async requestPart(
+    id: string,
+    userId: string,
+    userEmail: string,
+  ): Promise<Part> {
+    const part = await this.findOne(id)
+    if (part.status !== PartStatus.AVAILABLE) {
+      throw new BadRequestException('Part cannot be requested')
+    }
+
+    part.status = PartStatus.REQUESTED
+    part.requestedByUserId = userId
+    part.requestedByUserEmail = userEmail
+    part.requestedAtTimestamp = new Date()
+
+    return this.partRepo.save(part)
+  }
+
+  /**
+   * ENGINEER: return a reserved part (puts it back in stock)
+   */
+  async returnPart(
+    id: string,
+    userId: string,
+    userEmail: string,
+    reason: string,
+  ): Promise<Part> {
+    const part = await this.findOne(id)
+    if (part.status !== PartStatus.PENDING_COLLECTION) {
+      throw new BadRequestException('Part is not currently reserved')
+    }
+
+    part.status = PartStatus.AVAILABLE
+    part.claimedBy = undefined
+    part.claimedAt = undefined
+
+    // (optionally log who/why/when)
+    return this.partRepo.save(part)
+  }
+}
