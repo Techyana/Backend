@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { PartStatus } from '../../entities/part-status.enum';
-import { Part } from '../../entities/part.entity';
+import { PartStatus } from '../part-status.enum';
+import { Part } from '../part.entity';
 
 export class PartResponseDto {
   @ApiProperty()
