@@ -7,12 +7,12 @@ import {
 } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
-import { Part } from '../entities/part.entity'
-import { PartTransaction } from '../entities/part-transaction.entity'
+import { Part } from './part.entity'
+import { PartTransaction } from '../transactions/part-transaction.entity'
 import { CreatePartDto } from './dto/create-part.dto'
 import { UpdatePartDto } from './dto/update-part.dto'
-import { PartStatus } from '../entities/part-status.enum'
-import { TransactionType } from '../entities/enums/transaction-type.enum'
+import { PartStatus } from './part-status.enum'
+import { TransactionType } from '../transactions/transaction-type.enum'
 
 @Injectable()
 export class PartsService {
