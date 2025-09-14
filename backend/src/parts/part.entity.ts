@@ -8,7 +8,7 @@ import {
 } from 'typeorm'
 import { ApiProperty } from '@nestjs/swagger'
 import { PartStatus } from './part-status.enum'
-import { PartTransaction } from './part-transaction.entity'
+import { PartTransaction } from '../transactions/part-transaction.entity'
 
 @Entity({ name: 'parts' })
 export class Part {
