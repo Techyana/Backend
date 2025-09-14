@@ -48,4 +48,10 @@ export class User {
 
   @OneToMany(() => PartTransaction, (tx) => tx.user)
   claimedTransactions: PartTransaction[];
+
+  @OneToMany(() => Notification, n => n.user)
+  notifications: Notification[]
+
+  @OneToMany(() => ActivityLog, log => log.user)
+  activityLogs: ActivityLog[]
 }
