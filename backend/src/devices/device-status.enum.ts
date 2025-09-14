@@ -1,4 +1,4 @@
 export enum DeviceStatus {
-  APPROVED_FOR_DISPOSAL = 'APPROVED_FOR_DISPOSAL',
-  REMOVED = 'REMOVED',
+  APPROVED_FOR_DISPOSAL = 'approved_for_disposal',
+  REMOVED = 'removed',
 }
