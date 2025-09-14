@@ -144,7 +144,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Part"
+                  "$ref": "#/components/schemas/PartResponseDto"
                 }
               }
             }
@@ -203,7 +203,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/Part"
+                    "$ref": "#/components/schemas/PartResponseDto"
                   }
                 }
               }
@@ -263,7 +263,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Part"
+                  "$ref": "#/components/schemas/PartResponseDto"
                 }
               }
             }
@@ -350,7 +350,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Part"
+                  "$ref": "#/components/schemas/PartResponseDto"
                 }
               }
             }
@@ -515,7 +515,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Part"
+                  "$ref": "#/components/schemas/PartResponseDto"
                 }
               }
             }
@@ -594,7 +594,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Part"
+                  "$ref": "#/components/schemas/PartResponseDto"
                 }
               }
             }
@@ -689,7 +689,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Part"
+                  "$ref": "#/components/schemas/PartResponseDto"
                 }
               }
             }
@@ -812,7 +812,7 @@
           "quantity"
         ]
       },
-      "Part": {
+      "PartResponseDto": {
         "type": "object",
         "properties": {}
       },

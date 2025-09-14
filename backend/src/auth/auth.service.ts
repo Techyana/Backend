@@ -1,27 +1,25 @@
-// src/auth/auth.service.ts
-
 import {
   Injectable,
   UnauthorizedException,
   ForbiddenException,
   NotFoundException,
   BadRequestException,
-} from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
-import * as bcrypt from 'bcrypt';
+} from '@nestjs/common'
+import { JwtService } from '@nestjs/jwt'
+import { ConfigService } from '@nestjs/config'
+import * as bcrypt from 'bcrypt'
 
-import { UsersService } from '../users/users.service';
-import { MailService } from '../mail/mail.service';
+import { UsersService } from '../users/users.service'
+import { MailService } from '../mail/mail.service'
 
-import { LoginDto } from './dto/login.dto';
-import { UpdatePasswordDto } from './dto/update-password.dto';
-import type { AuthUserPayload } from './types/auth-user-payload.type';
-import { User } from '../users/user.entity';
+import { LoginDto } from './dto/login.dto'
+import { UpdatePasswordDto } from './dto/update-password.dto'
+import type { AuthUserPayload } from './types/auth-user-payload.type'
+import { User } from '../users/user.entity'
 
 export interface LoginResponse {
-  access_token: string;
-  user: AuthUserPayload;
+  access_token: string
+  user: AuthUserPayload
 }
 
 @Injectable()
@@ -34,47 +32,48 @@ export class AuthService {
   ) {}
 
   /**
-   * Sign a JWT so that `sub`=user.id and the rest of your
-   * AuthUserPayload fields end up as custom claims.
+   * Generate JWT access token with custom claims.
    */
   async generateAccessToken(payload: AuthUserPayload): Promise<string> {
-    const secret = this.configService.get<string>('JWT_SECRET');
+    const secret = this.configService.get<string>('JWT_SECRET')
     if (!secret) {
-      throw new Error('Missing JWT_SECRET in configuration');
+      throw new Error('Missing JWT_SECRET in configuration')
     }
 
     const expiresIn =
-      this.configService.get<string | number>('JWT_EXPIRES_IN') ?? '1h';
+      this.configService.get<string | number>('JWT_EXPIRES_IN') ?? '1h'
 
     // Split out `id` into the official "sub" claim
-    const { id, email, role, mustChangePassword, isActive } = payload;
+    const { id, email, role, mustChangePassword, isActive } = payload
 
     return this.jwtService.signAsync(
       { email, role, mustChangePassword, isActive },
       {
         secret,
         expiresIn,
-        subject: id,         // ← your userId
+        subject: id,
       },
-    );
+    )
   }
 
   /**
    * Validate credentials, fire welcome mail, return token + safe user DTO.
    */
   async login(dto: LoginDto): Promise<LoginResponse> {
-    const { email, password } = dto;
-    const user = await this.usersService.validateUser(email, password);
+    const { email, password } = dto
+    const user = await this.usersService.validateUser(email, password)
 
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Invalid credentials')
     }
     if (!user.isActive) {
-      throw new ForbiddenException('User account is inactive');
+      throw new ForbiddenException('User account is inactive')
     }
 
-    // Fire-and-forget welcome email
-    this.mailService.sendWelcomeEmail(user.email, user.name).catch(() => {});
+    // Fire-and-forget welcome email (only on first login)
+    if (user.mustChangePassword) {
+      this.mailService.sendWelcomeEmail(user.email, user.name).catch(() => {})
+    }
 
     const payload: AuthUserPayload = {
       id: user.id,
@@ -83,10 +82,10 @@ export class AuthService {
       role: user.role,
       mustChangePassword: user.mustChangePassword,
       isActive: user.isActive,
-    };
+    }
 
-    const access_token = await this.generateAccessToken(payload);
-    return { access_token, user: payload };
+    const access_token = await this.generateAccessToken(payload)
+    return { access_token, user: payload }
   }
 
   /**
@@ -97,50 +96,50 @@ export class AuthService {
     userId: string,
     dto: UpdatePasswordDto,
   ): Promise<User> {
-    const { passwordCurrent, password, passwordConfirm } = dto;
+    const { passwordCurrent, password, passwordConfirm } = dto
 
     if (password !== passwordConfirm) {
-      throw new BadRequestException('Passwords do not match');
+      throw new BadRequestException('Passwords do not match')
     }
 
-    // 1) Load
-    const user = await this.usersService.findById(userId);
+    // 1) Load user
+    const user = await this.usersService.findById(userId)
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('User not found')
     }
 
-    // 2) If not first‐login, verify current password
+    // 2) If not first login, verify current password
     if (!user.mustChangePassword) {
       if (!passwordCurrent) {
-        throw new BadRequestException('Current password is required');
+        throw new BadRequestException('Current password is required')
       }
-      const valid = await bcrypt.compare(passwordCurrent, user.passwordHash);
+      const valid = await bcrypt.compare(passwordCurrent, user.passwordHash)
       if (!valid) {
-        throw new BadRequestException('Current password is incorrect');
+        throw new BadRequestException('Current password is incorrect')
       }
-      // prevent reusing the same password
+      // Prevent reusing the same password
       if (await bcrypt.compare(password, user.passwordHash)) {
         throw new BadRequestException(
           'New password must be different from the old one',
-        );
+        )
       }
     }
 
     // 3) Hash & flip the flag
     const saltRounds = Number(
       this.configService.get<number>('BCRYPT_SALT_ROUNDS') ?? 10,
-    );
-    user.passwordHash = await bcrypt.hash(password, saltRounds);
-    user.mustChangePassword = false;
+    )
+    user.passwordHash = await bcrypt.hash(password, saltRounds)
+    user.mustChangePassword = false
 
     // 4) Persist both columns in one go
-    const savedUser = await this.usersService.save(user);
+    const savedUser = await this.usersService.save(user)
 
     // 5) Fire confirmation mail
     this.mailService
       .sendPasswordChangeConfirmation(savedUser.email, savedUser.name)
-      .catch(() => {});
+      .catch(() => {})
 
-    return savedUser;
+    return savedUser
   }
 }

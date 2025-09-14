@@ -1,28 +1,30 @@
-// src/entities/part.entity.ts
-
 import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  ManyToOne,
-  JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToMany,
 } from 'typeorm'
-import { User } from '../users/user.entity'
+import { ApiProperty } from '@nestjs/swagger'
 import { PartStatus } from './part-status.enum'
+import { PartTransaction } from './part-transaction.entity'
 
 @Entity({ name: 'parts' })
 export class Part {
+  @ApiProperty({ example: 'uuid-string' })
   @PrimaryGeneratedColumn('uuid')
   id: string
 
+  @ApiProperty({ example: 'Fuser Unit' })
   @Column({ length: 100 })
   name: string
 
+  @ApiProperty({ example: 'D009-1234' })
   @Column({ length: 50, name: 'part_number' })
   partNumber: string
 
+  @ApiProperty({ example: ['IMC3000', 'MP3055'], type: [String] })
   @Column('text', {
     array: true,
     name: 'for_device_models',
@@ -30,9 +32,15 @@ export class Part {
   })
   forDeviceModels: string[]
 
+  @ApiProperty({ example: 5 })
   @Column({ type: 'int', default: 1 })
   quantity: number
 
+  @ApiProperty({ example: 3 })
+  @Column({ type: 'int', default: 1, name: 'available_quantity' })
+  availableQuantity: number
+
+  @ApiProperty({ enum: PartStatus, example: PartStatus.AVAILABLE })
   @Column({
     type: 'enum',
     enum: PartStatus,
@@ -41,43 +49,30 @@ export class Part {
   })
   status: PartStatus
 
-  // FK column for the claimer
-  @Column('uuid', { name: 'claimed_by_user_id', nullable: true })
-  claimedById?: string
+  @ApiProperty({ example: 'Acme Corp', required: false })
+  @Column({ nullable: true })
+  client?: string
 
-  // Who reserved/claimed it for pickup
-  @ManyToOne(() => User, (user) => user.claimedParts, {
-    nullable: true,
-    onDelete: 'SET NULL',
-    eager: true,
-  })
-  @JoinColumn({ name: 'claimed_by_user_id' })
-  claimedBy?: User
+  @ApiProperty({ example: 'RZ123456', required: false })
+  @Column({ nullable: true })
+  deviceSerial?: string
 
-  @Column({ name: 'claimed_at', type: 'timestamptz', nullable: true })
-  claimedAt?: Date
+  @ApiProperty({ example: false })
+  @Column({ default: false })
+  collected: boolean
 
-  // Who requested an out-of-stock order
-  @Column('uuid', { name: 'requested_by_user_id', nullable: true })
-  requestedByUserId?: string
+  @ApiProperty({ type: () => [PartTransaction], required: false })
+  @OneToMany(() => PartTransaction, (tx) => tx.part)
+  transactions: PartTransaction[]
 
-  @Column({ name: 'requested_by_user_email', nullable: true })
-  requestedByUserEmail?: string
-
-  @Column({
-    name: 'requested_at_timestamp',
-    type: 'timestamptz',
-    nullable: true,
-  })
-  requestedAtTimestamp?: Date
-
-  // Timestamps
+  @ApiProperty({ example: '2024-09-13T10:00:00Z' })
   @CreateDateColumn({
     name: 'created_at_timestamp',
     type: 'timestamptz',
   })
   createdAtTimestamp: Date
 
+  @ApiProperty({ example: '2024-09-13T10:00:00Z' })
   @UpdateDateColumn({
     name: 'updated_at_timestamp',
     type: 'timestamptz',

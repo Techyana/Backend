@@ -11,7 +11,6 @@ import { Part } from '../entities/part.entity'
 import { CreatePartDto } from './dto/create-part.dto'
 import { UpdatePartDto } from './dto/update-part.dto'
 import { PartStatus } from '../entities/part-status.enum'
-import { User } from '../users/user.entity'
 
 @Injectable()
 export class PartsService {
@@ -35,9 +34,7 @@ export class PartsService {
    * Fetch all parts, including who claimed them
    */
   async findAll(): Promise<Part[]> {
-    return this.partRepo.find({
-      relations: ['claimedBy'],
-    })
+    return this.partRepo.find({ relations: ['claimedBy'] })
   }
 
   /**
@@ -83,25 +80,20 @@ export class PartsService {
     reason: string,
   ): Promise<void> {
     const part = await this.findOne(id)
-    // (optionally record userId, userEmail, reason in audit log)
+    // (optionally record userId, userEmail, reason in audit logs)
     await this.partRepo.remove(part)
   }
 
   /**
    * ENGINEER: claim an AVAILABLE part for pickup
+   * uses QueryBuilder to guarantee the FK column is updated
    */
-  async claimPart(
-    id: string,
-    userId: string,
-    userEmail: string,
-  ): Promise<Part> {
+  async claimPart(id: string, userId: string): Promise<Part> {
     const part = await this.findOne(id)
-
     if (part.status !== PartStatus.AVAILABLE) {
       throw new BadRequestException('Part is not available to claim')
     }
 
-    // update status, claimed_by_user_id and claimed_at in one SQL
     await this.partRepo
       .createQueryBuilder()
       .update(Part)
@@ -113,11 +105,9 @@ export class PartsService {
       .where('id = :id', { id })
       .execute()
 
-    // re-fetch with relation so claimedBy is hydrated
+    // re-fetch with the claimedBy relation hydrated
     return this.findOne(id)
   }
-
-
 
   /**
    * ENGINEER: request an out-of-stock part
@@ -128,7 +118,6 @@ export class PartsService {
     userEmail: string,
   ): Promise<Part> {
     const part = await this.findOne(id)
-
     if (part.status !== PartStatus.AVAILABLE) {
       throw new BadRequestException('Part cannot be requested')
     }
@@ -140,7 +129,7 @@ export class PartsService {
 
     await this.partRepo.save(part)
 
-    // re-fetch including `claimedBy` (although null here)
+    // re-fetch so claimedBy stays correct (null here)
     return this.findOne(id)
   }
 
@@ -154,7 +143,6 @@ export class PartsService {
     reason: string,
   ): Promise<Part> {
     const part = await this.findOne(id)
-
     if (part.status !== PartStatus.PENDING_COLLECTION) {
       throw new BadRequestException('Part is not currently reserved')
     }
@@ -165,7 +153,6 @@ export class PartsService {
 
     await this.partRepo.save(part)
 
-    // re-fetch so relation state is correct
     return this.findOne(id)
   }
 }

@@ -27,11 +27,11 @@ import { AuthGuard } from '@nestjs/passport'
 import { RolesGuard } from '../auth/roles.guard'
 import { Roles } from '../auth/roles.decorator'
 import { Role } from '../users/role.enum'
+import { PartStatus } from '../entities/part-status.enum'
 import { PartsService } from './parts.service'
 import { CreatePartDto } from './dto/create-part.dto'
 import { UpdatePartDto } from './dto/update-part.dto'
-import { Part } from '../entities/part.entity'
-import { PartStatus } from '../entities/part-status.enum'
+import { PartResponseDto } from './dto/part-response.dto'
 import { ErrorResponseDto } from '../common/dto/error-response.dto'
 
 const SWAGGER_BEARER = process.env.SWAGGER_BEARER_NAME || 'access-token'
@@ -49,12 +49,13 @@ export class PartsController {
   @ApiTags('Parts', 'Admin')
   @ApiOperation({ summary: 'Create a new part' })
   @ApiBody({ type: CreatePartDto })
-  @ApiResponse({ status: 201, description: 'Part created', type: Part })
+  @ApiResponse({ status: 201, description: 'Part created', type: PartResponseDto })
   @ApiResponse({ status: 400, type: ErrorResponseDto, description: 'Validation error' })
   @ApiResponse({ status: 401, type: ErrorResponseDto, description: 'Unauthorized' })
   @ApiResponse({ status: 403, type: ErrorResponseDto, description: 'Forbidden' })
-  async create(@Body() dto: CreatePartDto): Promise<Part> {
-    return this.partsService.create(dto)
+  async create(@Body() dto: CreatePartDto): Promise<PartResponseDto> {
+    const part = await this.partsService.create(dto)
+    return new PartResponseDto(part)
   }
 
   // Read all parts (ADMIN, SUPERVISOR, ENGINEER)
@@ -63,14 +64,16 @@ export class PartsController {
   @Roles(Role.ADMIN, Role.SUPERVISOR, Role.ENGINEER)
   @ApiTags('Parts', 'Read')
   @ApiOperation({ summary: 'Retrieve all parts' })
-  @ApiResponse({ status: 200, description: 'Array of parts', type: [Part] })
+  @ApiResponse({ status: 200, description: 'Array of parts', type: [PartResponseDto] })
   @ApiResponse({ status: 401, type: ErrorResponseDto, description: 'Unauthorized' })
   @ApiResponse({ status: 403, type: ErrorResponseDto, description: 'Forbidden' })
-  async findAll(@Request() req: any): Promise<Part[]> {
-    if (req.user.role === Role.ENGINEER) {
-      return this.partsService.findByStatus(PartStatus.AVAILABLE)
-    }
-    return this.partsService.findAll()
+  async findAll(@Request() req: any): Promise<PartResponseDto[]> {
+    const parts =
+      req.user.role === Role.ENGINEER
+        ? await this.partsService.findByStatus(PartStatus.AVAILABLE)
+        : await this.partsService.findAll()
+
+    return parts.map((p) => new PartResponseDto(p))
   }
 
   // Read one part by UUID (all roles)
@@ -79,15 +82,16 @@ export class PartsController {
   @ApiTags('Parts', 'Read')
   @ApiOperation({ summary: 'Retrieve a part by its UUID' })
   @ApiParam({ name: 'id', type: String, description: 'Part UUID' })
-  @ApiResponse({ status: 200, description: 'Part found', type: Part })
+  @ApiResponse({ status: 200, description: 'Part found', type: PartResponseDto })
   @ApiResponse({ status: 400, type: ErrorResponseDto, description: 'Invalid UUID' })
   @ApiResponse({ status: 401, type: ErrorResponseDto, description: 'Unauthorized' })
   @ApiResponse({ status: 403, type: ErrorResponseDto, description: 'Forbidden' })
   @ApiResponse({ status: 404, type: ErrorResponseDto, description: 'Part not found' })
   async findOne(
     @Param('id', new ParseUUIDPipe()) id: string,
-  ): Promise<Part> {
-    return this.partsService.findOne(id)
+  ): Promise<PartResponseDto> {
+    const part = await this.partsService.findOne(id)
+    return new PartResponseDto(part)
   }
 
   // Update a part by UUID (ADMIN)
@@ -97,7 +101,7 @@ export class PartsController {
   @ApiOperation({ summary: 'Update a part by its UUID' })
   @ApiParam({ name: 'id', type: String, description: 'Part UUID' })
   @ApiBody({ type: UpdatePartDto })
-  @ApiResponse({ status: 200, description: 'Part updated', type: Part })
+  @ApiResponse({ status: 200, description: 'Part updated', type: PartResponseDto })
   @ApiResponse({ status: 400, type: ErrorResponseDto, description: 'Validation error' })
   @ApiResponse({ status: 401, type: ErrorResponseDto, description: 'Unauthorized' })
   @ApiResponse({ status: 403, type: ErrorResponseDto, description: 'Forbidden' })
@@ -105,8 +109,9 @@ export class PartsController {
   async update(
     @Param('id', new ParseUUIDPipe()) id: string,
     @Body() dto: UpdatePartDto,
-  ): Promise<Part> {
-    return this.partsService.update(id, dto)
+  ): Promise<PartResponseDto> {
+    const part = await this.partsService.update(id, dto)
+    return new PartResponseDto(part)
   }
 
   // Delete a part by UUID, with reason (ADMIN)
@@ -134,7 +139,7 @@ export class PartsController {
     @Body('reason') reason: string,
     @Request() req: any,
   ): Promise<void> {
-    return this.partsService.removeWithReason(
+    await this.partsService.removeWithReason(
       id,
       req.user.sub,
       req.user.email,
@@ -148,7 +153,7 @@ export class PartsController {
   @ApiTags('Parts', 'Claims')
   @ApiOperation({ summary: 'Claim a part for the current user' })
   @ApiParam({ name: 'id', type: String, description: 'Part UUID' })
-  @ApiResponse({ status: 200, description: 'Part claimed', type: Part })
+  @ApiResponse({ status: 200, description: 'Part claimed', type: PartResponseDto })
   @ApiResponse({ status: 400, type: ErrorResponseDto, description: 'Validation error' })
   @ApiResponse({ status: 401, type: ErrorResponseDto, description: 'Unauthorized' })
   @ApiResponse({ status: 403, type: ErrorResponseDto, description: 'Forbidden' })
@@ -157,13 +162,12 @@ export class PartsController {
   async claimPart(
     @Param('id', new ParseUUIDPipe()) id: string,
     @Request() req: any,
-  ): Promise<Part> {
-    console.log('🕵️‍♂️ claimPart invoked by:', req.user)
-    return this.partsService.claimPart(
+  ): Promise<PartResponseDto> {
+    const part = await this.partsService.claimPart(
       id,
       req.user.sub,
-      req.user.email,
     )
+    return new PartResponseDto(part, req.user.name)
   }
 
   // Request a part (ENGINEER)
@@ -172,7 +176,7 @@ export class PartsController {
   @ApiTags('Parts', 'Requests')
   @ApiOperation({ summary: 'Request a part for the current user' })
   @ApiParam({ name: 'id', type: String, description: 'Part UUID' })
-  @ApiResponse({ status: 200, description: 'Part requested', type: Part })
+  @ApiResponse({ status: 200, description: 'Part requested', type: PartResponseDto })
   @ApiResponse({ status: 400, type: ErrorResponseDto, description: 'Validation error' })
   @ApiResponse({ status: 401, type: ErrorResponseDto, description: 'Unauthorized' })
   @ApiResponse({ status: 403, type: ErrorResponseDto, description: 'Forbidden' })
@@ -181,12 +185,13 @@ export class PartsController {
   async requestPart(
     @Param('id', new ParseUUIDPipe()) id: string,
     @Request() req: any,
-  ): Promise<Part> {
-    return this.partsService.requestPart(
+  ): Promise<PartResponseDto> {
+    const part = await this.partsService.requestPart(
       id,
       req.user.sub,
       req.user.email,
     )
+    return new PartResponseDto(part, req.user.name)
   }
 
   // Return a claimed part (ENGINEER)
@@ -203,7 +208,7 @@ export class PartsController {
       },
     },
   })
-  @ApiResponse({ status: 200, description: 'Part returned', type: Part })
+  @ApiResponse({ status: 200, description: 'Part returned', type: PartResponseDto })
   @ApiResponse({ status: 400, type: ErrorResponseDto, description: 'Validation error' })
   @ApiResponse({ status: 401, type: ErrorResponseDto, description: 'Unauthorized' })
   @ApiResponse({ status: 403, type: ErrorResponseDto, description: 'Forbidden' })
@@ -213,12 +218,13 @@ export class PartsController {
     @Param('id', new ParseUUIDPipe()) id: string,
     @Body('reason') reason: string,
     @Request() req: any,
-  ): Promise<Part> {
-    return this.partsService.returnPart(
+  ): Promise<PartResponseDto> {
+    const part = await this.partsService.returnPart(
       id,
       req.user.sub,
       req.user.email,
       reason,
     )
+    return new PartResponseDto(part)
   }
 }

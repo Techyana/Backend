@@ -1,0 +1,24 @@
+{
+  "dependencies": {
+    "@nestjs/common": "^11.1.6",
+    "@nestjs/core": "^11.1.6",
+    "@nestjs/platform-express": "^11.1.6",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "tree": "^0.1.3",
+    "typeorm": "^0.3.26"
+  },
+  "name": "ricoh-workshop-portal",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@types/node": "^24.3.0"
+  }
+}
