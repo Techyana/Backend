@@ -5,8 +5,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { NotificationsGateway } from './notifications/notifications.gateway';
 import { MailModule } from './mail/mail.module';
-import { PartsModule } from './parts/parts.module';   // ← import here
+import { PartsModule } from './parts/parts.module';
 import { join } from 'path';
 
 @Module({
