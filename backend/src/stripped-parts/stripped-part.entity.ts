@@ -1,21 +1,33 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn } from 'typeorm';
-import { Part } from '../entities/part.entity';
-import { Device } from '../entities/device.entity';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  ManyToOne,
+} from 'typeorm'
+import { ApiProperty } from '@nestjs/swagger'
+import { Device } from './device.entity'
+import { Part } from './part.entity'
 
-@Entity('stripped_parts')
+@Entity({ name: 'stripped_parts' })
 export class StrippedPart {
+  @ApiProperty({ example: 'uuid-string' })
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id: string
 
-  @ManyToOne(() => Part, { nullable: false })
-  part: Part;
+  @ApiProperty({ type: () => Device })
+  @ManyToOne(() => Device, (device) => device.strippedParts, { onDelete: 'CASCADE' })
+  device: Device
 
-  @ManyToOne(() => Device, { nullable: false })
-  device: Device;
+  @ApiProperty({ type: () => Part })
+  @ManyToOne(() => Part, { onDelete: 'CASCADE' })
+  part: Part
 
-  @Column({ type: 'varchar', length: 255 })
-  partName: string;
+  @ApiProperty({ example: 'Fuser Unit' })
+  @Column({ length: 150 })
+  partName: string
 
-  @CreateDateColumn()
-  strippedAt: Date;
+  @ApiProperty({ example: '2024-09-13T10:00:00Z' })
+  @CreateDateColumn({ name: 'stripped_at', type: 'timestamptz' })
+  strippedAt: Date
 }
