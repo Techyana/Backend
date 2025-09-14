@@ -1,1 +1,60 @@
-{}
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { PartTransaction } from './part-transaction.entity';
+import { Part } from '../parts/part.entity';
+import { User } from '../users/user.entity';
+import { CreateTransactionDto } from './dto/create-transaction.dto';
+
+@Injectable()
+export class TransactionsService {
+  constructor(
+    @InjectRepository(PartTransaction)
+    private readonly transactionRepo: Repository<PartTransaction>,
+    @InjectRepository(Part)
+    private readonly partRepo: Repository<Part>,
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
+  ) {}
+
+  async findAll(): Promise<PartTransaction[]> {
+    return this.transactionRepo.find({
+      relations: ['part', 'user'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  async findRecent(hours: number, types?: string[]): Promise<PartTransaction[]> {
+    const since = new Date(Date.now() - hours * 60 * 60 * 1000);
+    const qb = this.transactionRepo.createQueryBuilder('tx')
+      .leftJoinAndSelect('tx.part', 'part')
+      .leftJoinAndSelect('tx.user', 'user')
+      .where('tx.createdAt >= :since', { since });
+    if (types && types.length) {
+      qb.andWhere('tx.type IN (:...types)', { types });
+    }
+    return qb.orderBy('tx.createdAt', 'DESC').getMany();
+  }
+
+  async findOne(id: string): Promise<PartTransaction | null> {
+    return this.transactionRepo.findOne({
+      where: { id },
+      relations: ['part', 'user'],
+    });
+  }
+
+  async create(dto: CreateTransactionDto): Promise<PartTransaction> {
+    const part = await this.partRepo.findOne({ where: { id: dto.partId } });
+    if (!part) throw new Error('Part not found');
+    const user = await this.userRepo.findOne({ where: { id: dto.userId } });
+    if (!user) throw new Error('User not found');
+    const tx = this.transactionRepo.create({
+      part,
+      user,
+      type: dto.type,
+      quantityDelta: dto.quantityDelta,
+      createdAt: new Date(),
+    });
+    return this.transactionRepo.save(tx);
+  }
+}
