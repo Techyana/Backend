@@ -5,13 +5,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
-import { NotificationsGateway } from './notifications/notifications.gateway';
+import { NotificationsModule } from './notifications/notifications.module';
 import { MailModule } from './mail/mail.module';
 import { PartsModule } from './parts/parts.module';
 import { join } from 'path';
 
 @Module({
-  providers: [NotificationsGateway],
+ 
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
 
@@ -27,7 +27,7 @@ import { join } from 'path';
         database: cfg.get<string>('DB_NAME', 'postgres'),
 
         entities: [join(__dirname, '**', '*.entity.js')],
-        migrations: [join(__dirname, 'migrations/*.{ts,js}')],
+        migrations: [join(__dirname, 'migrations/*.js')],
 
         synchronize: false,
         migrationsRun: true,
@@ -39,7 +39,8 @@ import { join } from 'path';
     UsersModule,
     AuthModule,
     MailModule,
-    PartsModule,    // ← register module here
+    PartsModule,
+    NotificationsModule,// ← register module here
   ],
 })
 export class AppModule {}
