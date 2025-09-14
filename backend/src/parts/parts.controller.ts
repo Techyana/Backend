@@ -43,7 +43,6 @@ const SWAGGER_BEARER = process.env.SWAGGER_BEARER_NAME || 'access-token'
 export class PartsController {
   constructor(private readonly partsService: PartsService) {}
 
-  // Create a new part (ADMIN & SUPERVISOR)
   @Post()
   @Roles(Role.ADMIN, Role.SUPERVISOR)
   @ApiTags('Parts', 'Admin')
@@ -58,7 +57,6 @@ export class PartsController {
     return new PartResponseDto(part)
   }
 
-  // Read all parts (ADMIN, SUPERVISOR, ENGINEER)
   @Get()
   @Header('Cache-Control', 'no-store, max-age=0')
   @Roles(Role.ADMIN, Role.SUPERVISOR, Role.ENGINEER)
@@ -76,7 +74,6 @@ export class PartsController {
     return parts.map((p) => new PartResponseDto(p))
   }
 
-  // Read one part by UUID (all roles)
   @Get(':id')
   @Roles(Role.ADMIN, Role.SUPERVISOR, Role.ENGINEER)
   @ApiTags('Parts', 'Read')
@@ -94,7 +91,6 @@ export class PartsController {
     return new PartResponseDto(part)
   }
 
-  // Update a part by UUID (ADMIN)
   @Put(':id')
   @Roles(Role.ADMIN)
   @ApiTags('Parts', 'Admin')
@@ -114,7 +110,6 @@ export class PartsController {
     return new PartResponseDto(part)
   }
 
-  // Delete a part by UUID, with reason (ADMIN)
   @Delete(':id')
   @Roles(Role.ADMIN)
   @ApiTags('Parts', 'Admin')
@@ -147,7 +142,6 @@ export class PartsController {
     )
   }
 
-  // Claim a part (ENGINEER)
   @Post(':id/claim')
   @Roles(Role.ENGINEER)
   @ApiTags('Parts', 'Claims')
@@ -170,7 +164,6 @@ export class PartsController {
     return new PartResponseDto(part, req.user.name)
   }
 
-  // Request a part (ENGINEER)
   @Post(':id/request')
   @Roles(Role.ENGINEER)
   @ApiTags('Parts', 'Requests')
@@ -189,12 +182,10 @@ export class PartsController {
     const part = await this.partsService.requestPart(
       id,
       req.user.sub,
-      req.user.email,
     )
     return new PartResponseDto(part, req.user.name)
   }
 
-  // Return a claimed part (ENGINEER)
   @Post(':id/return')
   @Roles(Role.ENGINEER)
   @ApiTags('Parts', 'Returns')
