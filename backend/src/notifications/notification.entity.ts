@@ -1,33 +1,41 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn } from 'typeorm';
-import { User } from '../entities/user.entity';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  ManyToOne,
+} from 'typeorm'
+import { ApiProperty } from '@nestjs/swagger'
+import { User } from '../users/user.entity'
+import { NotificationType } from './enums/notification-type.enum'
 
-export enum NotificationType {
-  INFO = 'info',
-  WARNING = 'warning',
-  ERROR = 'error',
-  SUCCESS = 'success',
-}
-
-@Entity('notifications')
+@Entity({ name: 'notifications' })
 export class Notification {
+  @ApiProperty({ example: 'uuid-string' })
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id: string
 
-  @Column({ type: 'enum', enum: NotificationType, default: NotificationType.INFO })
-  type: NotificationType;
+  @ApiProperty({ type: () => User })
+  @ManyToOne(() => User, (user) => user.notifications, { onDelete: 'CASCADE' })
+  user: User
 
-  @Column({ type: 'varchar', length: 255 })
-  title: string;
+  @ApiProperty({ example: 'Part D009-1234 has arrived.' })
+  @Column({ type: 'text' })
+  message: string
 
-  @Column({ type: 'text', nullable: true })
-  message?: string;
+  @ApiProperty({ enum: NotificationType, example: NotificationType.PART_ARRIVAL })
+  @Column({ type: 'enum', enum: NotificationType })
+  type: NotificationType
 
-  @Column({ type: 'boolean', default: false })
-  read: boolean;
+  @ApiProperty({ example: false })
+  @Column({ default: false })
+  isRead: boolean
 
-  @ManyToOne(() => User, { nullable: true })
-  user?: User;
+  @ApiProperty({ example: '{"partId":"uuid-string"}', required: false })
+  @Column({ type: 'jsonb', nullable: true })
+  metadata?: Record<string, any>
 
-  @CreateDateColumn()
-  createdAt: Date;
+  @ApiProperty({ example: '2024-09-13T10:00:00Z' })
+  @CreateDateColumn({ name: 'timestamp', type: 'timestamptz' })
+  timestamp: Date
 }
