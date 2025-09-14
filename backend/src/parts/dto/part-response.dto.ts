@@ -1,36 +1,56 @@
-// src/parts/dto/part-response.dto.ts
-
-import { PartStatus } from '../../entities/part-status.enum'
-import { Part } from '../../entities/part.entity'
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { PartStatus } from '../../entities/part-status.enum';
+import { Part } from '../../entities/part.entity';
 
 export class PartResponseDto {
-  id: string
-  name: string
-  partNumber: string
-  forDeviceModels: string[]
-  quantity: number
-  status: PartStatus
-  claimedByName?: string | null
-  claimedAt?: Date | null
-  requestedByName?: string | null
-  requestedAtTimestamp?: Date | null
-  createdAtTimestamp: Date
-  updatedAtTimestamp: Date
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty()
+  name: string;
+
+  @ApiProperty()
+  partNumber: string;
+
+  @ApiProperty({ type: [String] })
+  forDeviceModels: string[];
+
+  @ApiProperty()
+  quantity: number;
+
+  @ApiProperty({ enum: PartStatus })
+  status: PartStatus;
+
+  @ApiPropertyOptional()
+  claimedByName?: string | null;
+
+  @ApiPropertyOptional({ type: String, format: 'date-time' })
+  claimedAt?: Date | null;
+
+  @ApiPropertyOptional()
+  requestedByName?: string | null;
+
+  @ApiPropertyOptional({ type: String, format: 'date-time' })
+  requestedAtTimestamp?: Date | null;
+
+  @ApiProperty({ type: String, format: 'date-time' })
+  createdAtTimestamp: Date;
+
+  @ApiProperty({ type: String, format: 'date-time' })
+  updatedAtTimestamp: Date;
 
   constructor(part: Part, actorName?: string) {
-    this.id                    = part.id
-    this.name                  = part.name
-    this.partNumber            = part.partNumber
-    this.forDeviceModels       = part.forDeviceModels
-    this.quantity              = part.quantity
-    this.status                = part.status
-    // relation’s name wins; fallback to actorName if provided
-    this.claimedByName         = part.claimedBy?.name ?? actorName ?? null
-    this.claimedAt             = part.claimedAt ?? null
-    // for request, actorName is the requester
-    this.requestedByName       = actorName ?? null
-    this.requestedAtTimestamp  = part.requestedAtTimestamp ?? null
-    this.createdAtTimestamp    = part.createdAtTimestamp
-    this.updatedAtTimestamp    = part.updatedAtTimestamp
+    this.id = part.id;
+    this.name = part.name;
+    this.partNumber = part.partNumber;
+    this.forDeviceModels = part.forDeviceModels;
+    this.quantity = part.quantity;
+    this.status = part.status;
+    this.claimedByName = part.claimedBy?.name ?? actorName ?? null;
+    this.claimedAt = part.claimedAt ?? null;
+    this.requestedByName = actorName ?? null;
+    this.requestedAtTimestamp = part.requestedAtTimestamp ?? null;
+    this.createdAtTimestamp = part.createdAtTimestamp;
+    this.updatedAtTimestamp = part.updatedAtTimestamp;
   }
 }
