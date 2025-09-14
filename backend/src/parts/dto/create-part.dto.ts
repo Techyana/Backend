@@ -7,7 +7,7 @@ import {
   ArrayNotEmpty,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { PartStatus } from '../../entities/part-status.enum';
+import { PartStatus } from '../part-status.enum';
 
 export class CreatePartDto {
   @ApiProperty()
