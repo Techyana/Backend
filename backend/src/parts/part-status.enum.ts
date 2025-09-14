@@ -1,7 +1,9 @@
-// src/entities/part-status.enum.ts
+/**
+ * Enum for part status in inventory workflow.
+ */
 export enum PartStatus {
-  AVAILABLE = 'AVAILABLE',
-  USED = 'USED',
-  REQUESTED = 'REQUESTED',
-  PENDING_COLLECTION = 'PENDING_COLLECTION',
+  AVAILABLE = 'available',
+  USED = 'used',
+  REQUESTED = 'requested',
+  PENDING_COLLECTION = 'pending_collection',
 }
