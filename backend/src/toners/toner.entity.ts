@@ -6,7 +6,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm'
 import { ApiProperty } from '@nestjs/swagger'
-import { TonerColor } from './enums/toner-color.enum'
+import { TonerColor } from './toner-color.enum'
 
 @Entity({ name: 'toners' })
 export class Toner {
