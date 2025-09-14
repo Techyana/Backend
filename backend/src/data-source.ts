@@ -4,6 +4,12 @@ import { DataSource } from 'typeorm';
 import type { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
 import { User } from './users/user.entity';
 import { Part } from './entities/part.entity';
+import { Device } from './entities/device.entity';
+import { Toner } from './entities/toner.entity';
+import { PartTransaction } from './entities/part-transaction.entity';
+import { Notification } from './entities/notification.entity';
+import { ActivityLog } from './entities/activity-log.entity';
+import { StrippedPart } from './entities/stripped-part.entity';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
@@ -15,7 +21,16 @@ const dataSourceOptions: PostgresConnectionOptions = {
   username: process.env.DB_USERNAME,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  entities: [ User, Part],
+  entities: [
+  User,
+  Part,
+  Device,
+  Toner,
+  PartTransaction,
+  Notification,
+  ActivityLog,
+  StrippedPart,
+],
   migrations: [join(__dirname, 'migrations', '*{.ts,.js}')],
   synchronize: false,
   logging: ['error', 'query'],
