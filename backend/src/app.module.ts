@@ -26,8 +26,8 @@ import { join } from 'path';
         password: cfg.get<string>('DB_PASSWORD', ''),
         database: cfg.get<string>('DB_NAME', 'postgres'),
 
-        entities: [join(__dirname, '**', '*.entity.js')],
-        migrations: [join(__dirname, 'migrations/*.js')],
+        entities: [join(__dirname, '**', '*.entity.{ts,js}')],
+        migrations: [join(__dirname, 'migrations/*.{ts,js}')],
 
         synchronize: false,
         migrationsRun: true,
@@ -40,7 +40,7 @@ import { join } from 'path';
     AuthModule,
     MailModule,
     PartsModule,
-    NotificationsModule,// ← register module here
+    NotificationsModule,
   ],
 })
 export class AppModule {}
