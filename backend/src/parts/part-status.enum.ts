@@ -6,4 +6,5 @@ export enum PartStatus {
   USED = 'used',
   REQUESTED = 'requested',
   PENDING_COLLECTION = 'pending_collection',
+  COLLECTED = 'collected',
 }
