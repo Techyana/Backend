@@ -9,6 +9,8 @@ import {
 } from 'typeorm';
 import { Role } from './role.enum';
 import { PartTransaction } from '../entities/part-transaction.entity'
+import { Notification } from '../notifications/notification.entity'
+import { ActivityLog } from '../notifications/activity-log.entity'
 
 @Entity('users')
 export class User {
