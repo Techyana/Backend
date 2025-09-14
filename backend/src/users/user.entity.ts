@@ -8,7 +8,7 @@ import {
   OneToMany,
 } from 'typeorm';
 import { Role } from './role.enum';
-import { Part } from '../entities/part.entity';
+import { PartTransaction } from '../entities/part-transaction.entity'
 
 @Entity('users')
 export class User {
@@ -46,6 +46,6 @@ export class User {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
-  @OneToMany(() => Part, (part: Part) => part.claimedBy)
-  claimedParts: Part[];
+  @OneToMany(() => PartTransaction, (tx) => tx.user)
+  claimedTransactions: PartTransaction[];
 }
