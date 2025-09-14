@@ -6,8 +6,8 @@ import {
   ManyToOne,
 } from 'typeorm'
 import { ApiProperty } from '@nestjs/swagger'
-import { Device } from './device.entity'
-import { Part } from './part.entity'
+import { Device } from './devices/device.entity'
+import { Part } from './parts/part.entity'
 
 @Entity({ name: 'stripped_parts' })
 export class StrippedPart {
