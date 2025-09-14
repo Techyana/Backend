@@ -9,9 +9,9 @@ import {
   JoinColumn,
 } from 'typeorm'
 import { ApiProperty } from '@nestjs/swagger'
-import { Part } from './part.entity'
+import { Part } from '../parts/part.entity'
 import { User } from '../users/user.entity'
-import { TransactionType } from './enums/transaction-type.enum'
+import { TransactionType } from './transaction-type.enum'
 
 @Entity({ name: 'part_transactions' })
 export class PartTransaction {
