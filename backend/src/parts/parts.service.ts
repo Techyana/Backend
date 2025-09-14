@@ -8,15 +8,20 @@ import {
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { Part } from '../entities/part.entity'
+import { PartTransaction } from '../entities/part-transaction.entity'
 import { CreatePartDto } from './dto/create-part.dto'
 import { UpdatePartDto } from './dto/update-part.dto'
 import { PartStatus } from '../entities/part-status.enum'
+import { TransactionType } from '../entities/enums/transaction-type.enum'
 
 @Injectable()
 export class PartsService {
   constructor(
     @InjectRepository(Part)
     private readonly partRepo: Repository<Part>,
+
+    @InjectRepository(PartTransaction)
+    private readonly txRepo: Repository<PartTransaction>,
   ) {}
 
   /**
@@ -31,42 +36,89 @@ export class PartsService {
   }
 
   /**
-   * Fetch all parts, including who claimed them
+   * Fetch all parts, each with its latest claim info
    */
-  async findAll(): Promise<Part[]> {
-    return this.partRepo.find({ relations: ['claimedBy'] })
+  async findAll(): Promise<Array<Part & { claimedByName?: string; claimedAt?: Date }>> {
+    const parts = await this.partRepo.find({
+      relations: ['transactions', 'transactions.user'],
+      order: { createdAtTimestamp: 'DESC' },
+    })
+
+    return parts.map((p) => {
+      // pick newest REQUEST or CLAIM transaction
+      const latest = p.transactions
+        .filter((tx) =>
+          tx.type === TransactionType.REQUEST ||
+          tx.type === TransactionType.CLAIM
+        )
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0]
+
+      return {
+        ...p,
+        claimedByName: latest?.user?.name,
+        claimedAt: latest?.createdAt,
+      }
+    })
   }
 
   /**
-   * Fetch parts by status, including who claimed them
+   * Fetch parts by status, each with its latest claim info
    */
-  async findByStatus(status: PartStatus): Promise<Part[]> {
-    return this.partRepo.find({
+  async findByStatus(
+    status: PartStatus,
+  ): Promise<Array<Part & { claimedByName?: string; claimedAt?: Date }>> {
+    const parts = await this.partRepo.find({
       where: { status },
-      relations: ['claimedBy'],
+      relations: ['transactions', 'transactions.user'],
+      order: { createdAtTimestamp: 'DESC' },
+    })
+
+    return parts.map((p) => {
+      const latest = p.transactions
+        .filter((tx) =>
+          tx.type === TransactionType.REQUEST ||
+          tx.type === TransactionType.CLAIM
+        )
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0]
+
+      return {
+        ...p,
+        claimedByName: latest?.user?.name,
+        claimedAt: latest?.createdAt,
+      }
     })
   }
 
   /**
-   * Fetch a single part by ID, including who claimed it
+   * Fetch a single part by ID, with latest claim info
    */
-  async findOne(id: string): Promise<Part> {
-    const part = await this.partRepo.findOne({
+  async findOne(id: string): Promise<Part & { claimedByName?: string; claimedAt?: Date }> {
+    const p = await this.partRepo.findOne({
       where: { id },
-      relations: ['claimedBy'],
+      relations: ['transactions', 'transactions.user'],
     })
-    if (!part) {
-      throw new NotFoundException(`Part with id ${id} not found`)
+    if (!p) throw new NotFoundException(`Part ${id} not found`)
+
+    const latest = p.transactions
+      .filter((tx) =>
+        tx.type === TransactionType.REQUEST ||
+        tx.type === TransactionType.CLAIM
+      )
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0]
+
+    return {
+      ...p,
+      claimedByName: latest?.user?.name,
+      claimedAt: latest?.createdAt,
     }
-    return part
   }
 
   /**
    * Update an existing part
    */
   async update(id: string, dto: UpdatePartDto): Promise<Part> {
-    const part = await this.findOne(id)
-    Object.assign(part, dto)
+    const part = await this.partRepo.preload({ id, ...dto })
+    if (!part) throw new NotFoundException(`Part ${id} not found`)
     return this.partRepo.save(part)
   }
 
@@ -79,62 +131,64 @@ export class PartsService {
     userEmail: string,
     reason: string,
   ): Promise<void> {
-    const part = await this.findOne(id)
-    // (optionally record userId, userEmail, reason in audit logs)
+    const part = await this.partRepo.findOneBy({ id })
+    if (!part) throw new NotFoundException(`Part ${id} not found`)
+    // TODO: audit log: userId, userEmail, reason
     await this.partRepo.remove(part)
   }
 
   /**
-   * ENGINEER: claim an AVAILABLE part for pickup
-   * uses QueryBuilder to guarantee the FK column is updated
+   * ENGINEER: claim an available part
    */
   async claimPart(id: string, userId: string): Promise<Part> {
-    const part = await this.findOne(id)
+    const part = await this.partRepo.findOneBy({ id })
+    if (!part) throw new NotFoundException(`Part ${id} not found`)
     if (part.status !== PartStatus.AVAILABLE) {
       throw new BadRequestException('Part is not available to claim')
     }
 
-    await this.partRepo
-      .createQueryBuilder()
-      .update(Part)
-      .set({
-        status: PartStatus.PENDING_COLLECTION,
-        claimedById: userId,
-        claimedAt: () => 'CURRENT_TIMESTAMP',
-      })
-      .where('id = :id', { id })
-      .execute()
+    // record the transaction
+    const tx = this.txRepo.create({
+      part,
+      user: { id: userId } as any,
+      type: TransactionType.CLAIM,
+      quantityDelta: 1,
+    })
+    await this.txRepo.save(tx)
 
-    // re-fetch with the claimedBy relation hydrated
+    // update part status
+    part.status = PartStatus.PENDING_COLLECTION
+    await this.partRepo.save(part)
+
     return this.findOne(id)
   }
 
   /**
    * ENGINEER: request an out-of-stock part
    */
-  async requestPart(
-    id: string,
-    userId: string,
-    userEmail: string,
-  ): Promise<Part> {
-    const part = await this.findOne(id)
+  async requestPart(id: string, userId: string): Promise<Part> {
+    const part = await this.partRepo.findOneBy({ id })
+    if (!part) throw new NotFoundException(`Part ${id} not found`)
     if (part.status !== PartStatus.AVAILABLE) {
       throw new BadRequestException('Part cannot be requested')
     }
 
-    part.status               = PartStatus.REQUESTED
-    part.requestedByUserId    = userId
-    part.requestedByUserEmail = userEmail
-    part.requestedAtTimestamp = new Date()
+    const tx = this.txRepo.create({
+      part,
+      user: { id: userId } as any,
+      type: TransactionType.REQUEST,
+      quantityDelta: 1,
+    })
+    await this.txRepo.save(tx)
 
+    part.status = PartStatus.REQUESTED
     await this.partRepo.save(part)
 
-    // re-fetch so claimedBy stays correct (null here)
     return this.findOne(id)
   }
 
   /**
-   * ENGINEER: return a previously claimed part back to AVAILABLE
+   * ENGINEER: return a previously claimed part
    */
   async returnPart(
     id: string,
@@ -142,15 +196,22 @@ export class PartsService {
     userEmail: string,
     reason: string,
   ): Promise<Part> {
-    const part = await this.findOne(id)
+    const part = await this.partRepo.findOneBy({ id })
+    if (!part) throw new NotFoundException(`Part ${id} not found`)
     if (part.status !== PartStatus.PENDING_COLLECTION) {
       throw new BadRequestException('Part is not currently reserved')
     }
 
-    part.status      = PartStatus.AVAILABLE
-    part.claimedById = undefined
-    part.claimedAt   = undefined
+    // record the return transaction
+    const tx = this.txRepo.create({
+      part,
+      user: { id: userId } as any,
+      type: TransactionType.COLLECTION,
+      quantityDelta: -1,
+    })
+    await this.txRepo.save(tx)
 
+    part.status = PartStatus.AVAILABLE
     await this.partRepo.save(part)
 
     return this.findOne(id)
