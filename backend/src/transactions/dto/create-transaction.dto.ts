@@ -1,21 +1,36 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsUUID, IsEnum, IsInt } from 'class-validator';
-import { PartTransactionType } from '../transaction-type.enum';
+// src/transactions/dto/create-transaction.dto.ts
+
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
+import {
+  IsString,
+  IsEnum,
+  IsUUID,
+  IsInt,
+  Min,
+  IsOptional,
+} from 'class-validator'
+import { PartTransactionType } from '../transaction-type.enum'
 
 export class CreateTransactionDto {
-  @ApiProperty({ type: String, format: 'uuid', description: 'ID of the part' })
+  @ApiProperty({ type: String, format: 'uuid' })
   @IsUUID()
-  partId: string;
+  partId: string
 
-  @ApiProperty({ type: String, format: 'uuid', description: 'ID of the user' })
+  @ApiProperty({ type: String, format: 'uuid' })
   @IsUUID()
-  userId: string;
+  userId: string
 
-  @ApiProperty({ enum: PartTransactionType, description: 'Type of transaction' })
+  @ApiProperty({ enum: PartTransactionType })
   @IsEnum(PartTransactionType)
-  type: PartTransactionType;
+  type: PartTransactionType
 
-  @ApiProperty({ type: Number, description: 'Quantity change (delta)' })
+  @ApiProperty({ type: Number, minimum: 1 })
   @IsInt()
-  quantityDelta: number;
+  @Min(1)
+  quantityDelta: number
+
+  @ApiPropertyOptional({ type: String, description: 'Optional notes/details' })
+  @IsOptional()
+  @IsString()
+  details?: string
 }

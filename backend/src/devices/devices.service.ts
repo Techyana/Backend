@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { Device } from './device.entity'
+import { DeviceStatus } from './device-status.enum'
 import { CreateDeviceDto } from './dto/create-device.dto'
 import { UpdateDeviceDto } from './dto/update-device.dto'
 
@@ -38,7 +39,7 @@ export class DevicesService {
   async remove(id: string, reason?: string): Promise<Device> {
     const device = await this.findById(id)
     if (!device) throw new NotFoundException('Device not found')
-    device.status = 'REMOVED'
+    device.status = DeviceStatus.REMOVED
     if (reason) device.removalReason = reason
     return this.deviceRepo.save(device)
   }

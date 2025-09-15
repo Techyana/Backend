@@ -157,11 +157,8 @@ export class PartsController {
     @Param('id', new ParseUUIDPipe()) id: string,
     @Request() req: any,
   ): Promise<PartResponseDto> {
-    const part = await this.partsService.claimPart(
-      id,
-      req.user.sub,
-    )
-    return new PartResponseDto(part, req.user.name)
+    const part = await this.partsService.claimPart(id, req.user.sub)
+    return new PartResponseDto(part)
   }
 
   @Post(':id/request')
@@ -179,11 +176,8 @@ export class PartsController {
     @Param('id', new ParseUUIDPipe()) id: string,
     @Request() req: any,
   ): Promise<PartResponseDto> {
-    const part = await this.partsService.requestPart(
-      id,
-      req.user.sub,
-    )
-    return new PartResponseDto(part, req.user.name)
+    const part = await this.partsService.requestPart(id, req.user.sub)
+    return new PartResponseDto(part)
   }
 
   @Post(':id/return')

@@ -1,24 +1,46 @@
-import { IsOptional, IsBoolean, IsString, MaxLength } from 'class-validator';
-import { ApiPropertyOptional } from '@nestjs/swagger';
-import { NotificationType } from '../notification-type.enum';
+// src/notifications/dto/update-notification.dto.ts
+
+import {
+  IsOptional,
+  IsBoolean,
+  IsString,
+  MaxLength,
+  IsEnum,
+} from 'class-validator'
+import { ApiPropertyOptional } from '@nestjs/swagger'
+import { NotificationType } from '../notification-type.enum'
 
 export class UpdateNotificationDto {
-  @ApiPropertyOptional({ type: 'boolean' })
+  @ApiPropertyOptional({
+    type: Boolean,
+    description: 'Mark notification as read or unread',
+  })
   @IsOptional()
   @IsBoolean()
-  isRead?: boolean;
+  isRead?: boolean
 
-  @ApiPropertyOptional({ type: 'string', maxLength: 255 })
+  @ApiPropertyOptional({
+    type: String,
+    maxLength: 255,
+    description: 'Updated notification message',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(255)
-  message?: string;
+  message?: string
 
-  @ApiPropertyOptional({ enum: NotificationType })
+  @ApiPropertyOptional({
+    enum: NotificationType,
+    description: 'Updated notification type',
+  })
   @IsOptional()
-  type?: NotificationType;
+  @IsEnum(NotificationType)
+  type?: NotificationType
 
-  @ApiPropertyOptional({ type: 'object', required: false })
+  @ApiPropertyOptional({
+    type: Object,
+    description: 'Additional metadata for notification',
+  })
   @IsOptional()
-  metadata?: Record<string, any>;
+  metadata?: Record<string, any>
 }

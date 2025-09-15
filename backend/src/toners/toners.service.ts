@@ -1,8 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Toner } from './toner.entity';
-import { CreateTonerDto } from './dto/create-toner.dto';
+// src/toners/toners.service.ts
+
+import { Injectable, NotFoundException } from '@nestjs/common'
+import { InjectRepository } from '@nestjs/typeorm'
+import { Repository } from 'typeorm'
+import { Toner } from './toner.entity'
+import { CreateTonerDto } from './dto/create-toner.dto'
 
 @Injectable()
 export class TonersService {
@@ -12,24 +14,24 @@ export class TonersService {
   ) {}
 
   async create(dto: CreateTonerDto): Promise<Toner> {
-    const toner = this.tonerRepo.create(dto);
-    return await this.tonerRepo.save(toner);
+    const toner = this.tonerRepo.create(dto)
+    return this.tonerRepo.save(toner)
   }
 
   async findAll(): Promise<Toner[]> {
-    return await this.tonerRepo.find();
+    return this.tonerRepo.find()
   }
 
   async findOne(id: string): Promise<Toner> {
-    const toner = await this.tonerRepo.findOne({ where: { id } });
+    const toner = await this.tonerRepo.findOne({ where: { id } })
     if (!toner) {
-      throw new NotFoundException(`Toner with id ${id} not found`);
+      throw new NotFoundException(`Toner with id ${id} not found`)
     }
-    return toner;
+    return toner
   }
 
   async remove(id: string): Promise<void> {
-    const toner = await this.findOne(id);
-    await this.tonerRepo.remove(toner);
+    const toner = await this.findOne(id)
+    await this.tonerRepo.remove(toner)
   }
 }

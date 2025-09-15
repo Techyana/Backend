@@ -1,9 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Notification } from './notification.entity';
-import { CreateNotificationDto } from './dto/create-notification.dto';
-import { UpdateNotificationDto } from './dto/update-notification.dto';
+// src/notifications/notifications.service.ts
+
+import { Injectable, NotFoundException } from '@nestjs/common'
+import { InjectRepository } from '@nestjs/typeorm'
+import { Repository } from 'typeorm'
+import { Notification } from './notification.entity'
+import { CreateNotificationDto } from './dto/create-notification.dto'
+import { UpdateNotificationDto } from './dto/update-notification.dto'
 
 @Injectable()
 export class NotificationService {
@@ -12,44 +14,54 @@ export class NotificationService {
     private readonly notificationRepository: Repository<Notification>,
   ) {}
 
-  async create(createNotificationDto: CreateNotificationDto): Promise<Notification> {
-    const notification = this.notificationRepository.create(createNotificationDto);
-    return await this.notificationRepository.save(notification);
+  async create(
+    createNotificationDto: CreateNotificationDto,
+  ): Promise<Notification> {
+    const notification = this.notificationRepository.create(
+      createNotificationDto,
+    )
+    return await this.notificationRepository.save(notification)
   }
 
   async findAll(userId?: string): Promise<Notification[]> {
+    // Notice: the Notification entity uses `timestamp`, not `createdAt`
+    const baseOptions = {
+      relations: ['user'],
+      order: { timestamp: 'DESC' as const },
+    }
+
     if (userId) {
       return await this.notificationRepository.find({
         where: { user: { id: userId } },
-        relations: ['user'],
-        order: { createdAt: 'DESC' },
-      });
+        ...baseOptions,
+      })
     }
-    return await this.notificationRepository.find({
-      relations: ['user'],
-      order: { createdAt: 'DESC' },
-    });
+
+    return await this.notificationRepository.find(baseOptions)
   }
 
   async findOne(id: string): Promise<Notification> {
     const notification = await this.notificationRepository.findOne({
       where: { id },
       relations: ['user'],
-    });
+    })
     if (!notification) {
-      throw new NotFoundException(`Notification with id ${id} not found`);
+      throw new NotFoundException(`Notification with id ${id} not found`)
     }
-    return notification;
+    return notification
   }
 
-  async update(id: string, updateNotificationDto: UpdateNotificationDto): Promise<Notification> {
-    const notification = await this.findOne(id);
-    Object.assign(notification, updateNotificationDto);
-    return await this.notificationRepository.save(notification);
+  async update(
+    id: string,
+    updateNotificationDto: UpdateNotificationDto,
+  ): Promise<Notification> {
+    const notification = await this.findOne(id)
+    Object.assign(notification, updateNotificationDto)
+    return await this.notificationRepository.save(notification)
   }
 
   async remove(id: string): Promise<void> {
-    const notification = await this.findOne(id);
-    await this.notificationRepository.remove(notification);
+    const notification = await this.findOne(id)
+    await this.notificationRepository.remove(notification)
   }
 }

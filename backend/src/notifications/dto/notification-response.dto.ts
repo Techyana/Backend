@@ -1,25 +1,26 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { NotificationType } from '../notification.entity';
+import { NotificationType } from '../notification-type.enum';
 
 export class NotificationResponseDto {
   @ApiProperty({ type: String, format: 'uuid' })
-  id: string;
+  id: string
 
-  @ApiProperty({ enum: NotificationType })
-  type: NotificationType;
-
-  @ApiProperty()
-  title: string;
-
-  @ApiPropertyOptional()
-  message?: string;
+  @ApiProperty({ enum: NotificationType, example: NotificationType.PART_ARRIVAL, })
+  type: NotificationType
 
   @ApiProperty()
-  read: boolean;
+  message: string
+
+  @ApiPropertyOptional({ type: Boolean })
+  isRead: boolean
 
   @ApiPropertyOptional({ type: String, format: 'uuid' })
-  userId?: string;
+  userId?: string
+
+  @ApiPropertyOptional({ type: Object, description: 'Any extra metadata' })
+  metadata?: Record<string, any>
+
 
   @ApiProperty({ type: String, format: 'date-time' })
-  createdAt: string;
+  timestamp: string
 }

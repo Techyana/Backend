@@ -63,12 +63,13 @@
           }
         },
         "responses": {
-          "201": {
-            "description": ""
+          "200": {
+            "description": "Login successful"
           }
         },
+        "summary": "Login and receive JWT session cookie",
         "tags": [
-          "Auth"
+          "auth"
         ]
       }
     },
@@ -87,12 +88,18 @@
           }
         },
         "responses": {
-          "201": {
-            "description": ""
+          "200": {
+            "description": "Password updated successfully"
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update password for logged-in user",
         "tags": [
-          "Auth"
+          "auth"
         ]
       }
     },
@@ -101,12 +108,18 @@
         "operationId": "AuthController_logout",
         "parameters": [],
         "responses": {
-          "201": {
-            "description": ""
+          "200": {
+            "description": "Logged out"
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Logout and clear JWT session cookie",
         "tags": [
-          "Auth"
+          "auth"
         ]
       }
     },
@@ -116,11 +129,17 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Current user info"
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get current authenticated user",
         "tags": [
-          "Auth"
+          "auth"
         ]
       }
     },
@@ -747,6 +766,187 @@
           "Returns"
         ]
       }
+    },
+    "/notifications": {
+      "post": {
+        "operationId": "NotificationsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateNotificationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a notification",
+        "tags": [
+          "notifications"
+        ]
+      },
+      "get": {
+        "operationId": "NotificationsController_findAll",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/NotificationResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get all notifications (optionally filter by user)",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/notifications/{id}": {
+      "get": {
+        "operationId": "NotificationsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a notification by ID",
+        "tags": [
+          "notifications"
+        ]
+      },
+      "patch": {
+        "operationId": "NotificationsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateNotificationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a notification",
+        "tags": [
+          "notifications"
+        ]
+      },
+      "delete": {
+        "operationId": "NotificationsController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a notification",
+        "tags": [
+          "notifications"
+        ]
+      }
     }
   },
   "info": {
@@ -768,53 +968,143 @@
     "schemas": {
       "UpdatePasswordDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "passwordCurrent": {
+            "type": "string",
+            "example": "OldPassword123!"
+          },
+          "password": {
+            "type": "string",
+            "example": "NewPassword456!",
+            "minLength": 8,
+            "maxLength": 32,
+            "description": "Must include uppercase, lowercase, number, and special character"
+          },
+          "passwordConfirm": {
+            "type": "string",
+            "example": "NewPassword456!"
+          }
+        },
+        "required": [
+          "password",
+          "passwordConfirm"
+        ]
       },
       "LoginDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "user@example.com"
+          },
+          "password": {
+            "type": "string",
+            "example": "SuperSecret123!",
+            "minLength": 8,
+            "maxLength": 32
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
       },
       "CreatePartDto": {
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "description": "Human-readable name of this part",
-            "example": "Fuser Unit Assembly"
+            "type": "string"
           },
           "partNumber": {
-            "type": "string",
-            "description": "Unique manufacturer part number",
-            "example": "D232-4069"
+            "type": "string"
           },
           "forDeviceModels": {
-            "description": "List of device models this part is compatible with",
-            "example": [
-              "MP C3003",
-              "MP C4504"
-            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "available",
+              "used",
+              "requested",
+              "pending_collection",
+              "collected"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "partNumber",
+          "forDeviceModels"
+        ]
+      },
+      "PartResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "partNumber": {
+            "type": "string"
+          },
+          "forDeviceModels": {
             "type": "array",
             "items": {
               "type": "string"
             }
           },
           "quantity": {
-            "type": "number",
-            "description": "Initial stock quantity for this part",
-            "example": 10,
-            "minimum": 1
+            "type": "number"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "available",
+              "used",
+              "requested",
+              "pending_collection",
+              "collected"
+            ]
+          },
+          "claimedByName": {
+            "type": "object"
+          },
+          "claimedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "requestedByName": {
+            "type": "object"
+          },
+          "requestedAtTimestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAtTimestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAtTimestamp": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "required": [
+          "id",
           "name",
           "partNumber",
           "forDeviceModels",
-          "quantity"
+          "quantity",
+          "status",
+          "createdAtTimestamp",
+          "updatedAtTimestamp"
         ]
-      },
-      "PartResponseDto": {
-        "type": "object",
-        "properties": {}
       },
       "ErrorResponseDto": {
         "type": "object",
@@ -861,7 +1151,133 @@
       },
       "UpdatePartDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "partNumber": {
+            "type": "string"
+          },
+          "forDeviceModels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "available",
+              "used",
+              "requested",
+              "pending_collection",
+              "collected"
+            ]
+          }
+        }
+      },
+      "CreateNotificationDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "part_arrival",
+              "part_available",
+              "general"
+            ],
+            "default": "general"
+          },
+          "message": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "isRead": {
+            "type": "boolean",
+            "default": false
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Optional JSON metadata"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "type",
+          "message"
+        ]
+      },
+      "NotificationResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "part_arrival",
+              "part_available",
+              "general"
+            ],
+            "example": "part_arrival"
+          },
+          "message": {
+            "type": "string"
+          },
+          "isRead": {
+            "type": "boolean"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Any extra metadata"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "message",
+          "timestamp"
+        ]
+      },
+      "UpdateNotificationDto": {
+        "type": "object",
+        "properties": {
+          "isRead": {
+            "type": "boolean",
+            "description": "Mark notification as read or unread"
+          },
+          "message": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "Updated notification message"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "part_arrival",
+              "part_available",
+              "general"
+            ],
+            "description": "Updated notification type"
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Additional metadata for notification"
+          }
+        }
       }
     }
   }

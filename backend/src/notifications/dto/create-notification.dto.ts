@@ -1,28 +1,29 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsString, IsOptional, IsBoolean, IsUUID } from 'class-validator';
-import { NotificationType } from '../notification.entity';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
+import { IsEnum, IsString, IsOptional, IsBoolean, IsUUID } from 'class-validator'
+import { NotificationType } from '../notification-type.enum'
 
 export class CreateNotificationDto {
-  @ApiProperty({ enum: NotificationType, default: NotificationType.INFO })
+  @ApiProperty({ enum: NotificationType, default: NotificationType.GENERAL })
   @IsEnum(NotificationType)
-  type: NotificationType;
+  type: NotificationType
 
   @ApiProperty({ type: String, maxLength: 255 })
   @IsString()
-  title: string;
-
-  @ApiPropertyOptional({ type: String })
-  @IsOptional()
-  @IsString()
-  message?: string;
+  message: string
 
   @ApiPropertyOptional({ type: Boolean, default: false })
   @IsOptional()
   @IsBoolean()
-  read?: boolean;
+  isRead?: boolean
+
+  @ApiPropertyOptional({
+  type: Object,
+  description: 'Optional JSON metadata',
+  })
+  metadata?: Record<string, any>
 
   @ApiPropertyOptional({ type: String, format: 'uuid' })
   @IsOptional()
   @IsUUID()
-  userId?: string;
+  userId?: string
 }

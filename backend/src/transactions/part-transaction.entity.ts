@@ -11,7 +11,7 @@ import {
 import { ApiProperty } from '@nestjs/swagger'
 import { Part } from '../parts/part.entity'
 import { User } from '../users/user.entity'
-import { TransactionType } from './transaction-type.enum'
+import { PartTransactionType } from './transaction-type.enum'
 
 @Entity({ name: 'part_transactions' })
 export class PartTransaction {
@@ -34,9 +34,9 @@ export class PartTransaction {
   @JoinColumn({ name: 'user_id' })
   user: User
 
-  @ApiProperty({ enum: TransactionType, example: TransactionType.CLAIM })
-  @Column({ type: 'enum', enum: TransactionType })
-  type: TransactionType
+  @ApiProperty({ enum: PartTransactionType, example: PartTransactionType.CLAIM })
+  @Column({ type: 'enum', enum: PartTransactionType })
+  type: PartTransactionType
 
   @ApiProperty({ example: 1 })
   @Column({ type: 'int', default: 1 })
