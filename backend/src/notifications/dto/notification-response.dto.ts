@@ -1,26 +1,40 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { NotificationType } from '../notification-type.enum';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
+import { Notification } from '../notification.entity'
+import { NotificationType } from '../notification-type.enum'
 
 export class NotificationResponseDto {
-  @ApiProperty({ type: String, format: 'uuid' })
+  @ApiProperty({ description: 'Notification UUID', format: 'uuid' })
   id: string
 
-  @ApiProperty({ enum: NotificationType, example: NotificationType.PART_ARRIVAL, })
-  type: NotificationType
+  @ApiProperty({ description: 'UUID of the user receiving this notification', format: 'uuid' })
+  userId: string
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Notification message text' })
   message: string
 
-  @ApiPropertyOptional({ type: Boolean })
+  @ApiProperty({ description: 'Category of notification', enum: NotificationType, example: NotificationType.PART_AVAILABLE })
+  type: NotificationType
+
+  @ApiProperty({ description: 'Read status', default: false })
   isRead: boolean
 
-  @ApiPropertyOptional({ type: String, format: 'uuid' })
-  userId?: string
-
-  @ApiPropertyOptional({ type: Object, description: 'Any extra metadata' })
+  @ApiPropertyOptional({
+    description: 'Arbitrary metadata payload',
+    type: 'object',
+    additionalProperties: true,
+  })
   metadata?: Record<string, any>
 
+  @ApiProperty({ description: 'When this notification was created', format: 'date-time' })
+  timestamp: Date
 
-  @ApiProperty({ type: String, format: 'date-time' })
-  timestamp: string
+  constructor(entity: Notification) {
+    this.id = entity.id
+    this.userId = entity.user.id
+    this.message = entity.message
+    this.type = entity.type
+    this.isRead = entity.isRead
+    this.metadata = entity.metadata
+    this.timestamp = entity.timestamp
+  }
 }

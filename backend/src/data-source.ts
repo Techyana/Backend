@@ -31,7 +31,7 @@ const dataSourceOptions: PostgresConnectionOptions = {
   ActivityLog,
   StrippedPart,
 ],
-  migrations: [join(__dirname, 'migrations', '*{.ts,.js}')],
+  migrations: [join(__dirname, '/database/migrations', '*{.ts,.js}')],
   synchronize: false,
   logging: ['error', 'query'],
 };

@@ -1,25 +1,31 @@
-import { WebSocketGateway, WebSocketServer, OnGatewayConnection, OnGatewayDisconnect } from '@nestjs/websockets';
-import { Server, Socket } from 'socket.io';
+// src/notifications/notifications.gateway.ts
 
-@WebSocketGateway({ namespace: '/notifications', cors: true })
+import { WebSocketGateway, WebSocketServer, OnGatewayConnection, OnGatewayDisconnect } from '@nestjs/websockets'
+import { Server, Socket } from 'socket.io'
+
+@WebSocketGateway({
+  namespace: '/notifications',
+  cors: { origin: true, credentials: true },
+})
 export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
-  server: Server;
+  server: Server
 
   handleConnection(client: Socket) {
-    // Get userId from query params
-    const userId = client.handshake.query.userId as string;
-    if (userId) {
-      client.join(userId); // Join room for this user
+    const userId = (client.handshake.query.userId as string) || ''
+    if (!userId) {
+      client.emit('error', 'Missing userId')
+      client.disconnect(true)
+      return
     }
-    // Optionally authenticate client here
+    client.join(userId)
   }
 
-  handleDisconnect(client: Socket) {
-    // Optionally handle disconnect logic
+  handleDisconnect(_client: Socket) {
+    // No-op; room membership is cleaned up automatically
   }
 
-  sendNotification(userId: string, notification: any) {
-    this.server.to(userId).emit('notification', notification);
+  sendNotification(userId: string, payload: any) {
+    this.server.to(userId).emit('notification', payload)
   }
 }

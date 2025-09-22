@@ -1,7 +1,9 @@
+// src/parts/part-status.enum.ts
+
 export enum PartStatus {
-  AVAILABLE = 'available',
-  USED = 'used',
-  REQUESTED = 'requested',
-  PENDING_COLLECTION = 'pending_collection',
-  COLLECTED = 'collected',
+  AVAILABLE = 'AVAILABLE',
+  PENDING_COLLECTION = 'PENDING_COLLECTION',
+  CLAIMED = 'CLAIMED',
+  COLLECTED = 'COLLECTED',
+  UNAVAILABLE = 'UNAVAILABLE',
 }

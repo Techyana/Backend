@@ -767,7 +767,114 @@
         ]
       }
     },
+    "/parts/{id}/collect": {
+      "post": {
+        "operationId": "PartsController_collectPart",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Part UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Part collected",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Part not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Mark a claimed part as collected",
+        "tags": [
+          "Parts",
+          "Parts",
+          "Collections"
+        ]
+      }
+    },
     "/notifications": {
+      "get": {
+        "operationId": "NotificationsController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/NotificationResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get notifications for current user (admin sees all)",
+        "tags": [
+          "Notifications"
+        ]
+      },
       "post": {
         "operationId": "NotificationsController_create",
         "parameters": [],
@@ -798,46 +905,9 @@
             "bearer": []
           }
         ],
-        "summary": "Create a notification",
+        "summary": "Admin: create a notification",
         "tags": [
-          "notifications"
-        ]
-      },
-      "get": {
-        "operationId": "NotificationsController_findAll",
-        "parameters": [
-          {
-            "name": "userId",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/NotificationResponseDto"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get all notifications (optionally filter by user)",
-        "tags": [
-          "notifications"
+          "Notifications"
         ]
       }
     },
@@ -871,9 +941,9 @@
             "bearer": []
           }
         ],
-        "summary": "Get a notification by ID",
+        "summary": "Get one notification by ID",
         "tags": [
-          "notifications"
+          "Notifications"
         ]
       },
       "patch": {
@@ -915,9 +985,9 @@
             "bearer": []
           }
         ],
-        "summary": "Update a notification",
+        "summary": "Admin: update a notification",
         "tags": [
-          "notifications"
+          "Notifications"
         ]
       },
       "delete": {
@@ -942,9 +1012,9 @@
             "bearer": []
           }
         ],
-        "summary": "Delete a notification",
+        "summary": "Admin: delete a notification",
         "tags": [
-          "notifications"
+          "Notifications"
         ]
       }
     }
@@ -1024,21 +1094,27 @@
               "type": "string"
             }
           },
+          "quantity": {
+            "type": "number",
+            "minimum": 0,
+            "default": 0
+          },
           "status": {
             "type": "string",
             "enum": [
-              "available",
-              "used",
-              "requested",
-              "pending_collection",
-              "collected"
+              "AVAILABLE",
+              "PENDING_COLLECTION",
+              "CLAIMED",
+              "COLLECTED",
+              "UNAVAILABLE"
             ]
           }
         },
         "required": [
           "name",
           "partNumber",
-          "forDeviceModels"
+          "forDeviceModels",
+          "quantity"
         ]
       },
       "PartResponseDto": {
@@ -1065,24 +1141,17 @@
           "status": {
             "type": "string",
             "enum": [
-              "available",
-              "used",
-              "requested",
-              "pending_collection",
-              "collected"
+              "AVAILABLE",
+              "PENDING_COLLECTION",
+              "CLAIMED",
+              "COLLECTED",
+              "UNAVAILABLE"
             ]
           },
           "claimedByName": {
             "type": "object"
           },
           "claimedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "requestedByName": {
-            "type": "object"
-          },
-          "requestedAtTimestamp": {
             "type": "string",
             "format": "date-time"
           },
@@ -1164,118 +1233,136 @@
               "type": "string"
             }
           },
+          "quantity": {
+            "type": "number"
+          },
           "status": {
             "type": "string",
             "enum": [
-              "available",
-              "used",
-              "requested",
-              "pending_collection",
-              "collected"
+              "AVAILABLE",
+              "PENDING_COLLECTION",
+              "CLAIMED",
+              "COLLECTED",
+              "UNAVAILABLE"
             ]
           }
         }
-      },
-      "CreateNotificationDto": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "enum": [
-              "part_arrival",
-              "part_available",
-              "general"
-            ],
-            "default": "general"
-          },
-          "message": {
-            "type": "string",
-            "maxLength": 255
-          },
-          "isRead": {
-            "type": "boolean",
-            "default": false
-          },
-          "metadata": {
-            "type": "object",
-            "description": "Optional JSON metadata"
-          },
-          "userId": {
-            "type": "string",
-            "format": "uuid"
-          }
-        },
-        "required": [
-          "type",
-          "message"
-        ]
       },
       "NotificationResponseDto": {
         "type": "object",
         "properties": {
           "id": {
             "type": "string",
+            "description": "Notification UUID",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "description": "UUID of the user receiving this notification",
+            "format": "uuid"
+          },
+          "message": {
+            "type": "string",
+            "description": "Notification message text"
+          },
+          "type": {
+            "type": "string",
+            "description": "Category of notification",
+            "enum": [
+              "PART_AVAILABLE",
+              "PART_REMOVED",
+              "PART_CLAIMED",
+              "PART_COLLECTED",
+              "GENERAL"
+            ],
+            "example": "PART_AVAILABLE"
+          },
+          "isRead": {
+            "type": "boolean",
+            "description": "Read status",
+            "default": false
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Arbitrary metadata payload",
+            "additionalProperties": true
+          },
+          "timestamp": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When this notification was created"
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "message",
+          "type",
+          "isRead",
+          "timestamp"
+        ]
+      },
+      "CreateNotificationDto": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
             "format": "uuid"
           },
           "type": {
             "type": "string",
             "enum": [
-              "part_arrival",
-              "part_available",
-              "general"
-            ],
-            "example": "part_arrival"
+              "PART_AVAILABLE",
+              "PART_REMOVED",
+              "PART_CLAIMED",
+              "PART_COLLECTED",
+              "GENERAL"
+            ]
           },
           "message": {
-            "type": "string"
-          },
-          "isRead": {
-            "type": "boolean"
-          },
-          "userId": {
             "type": "string",
-            "format": "uuid"
+            "maxLength": 500
           },
           "metadata": {
             "type": "object",
-            "description": "Any extra metadata"
+            "additionalProperties": true,
+            "description": "Arbitrary metadata payload"
           },
-          "timestamp": {
-            "type": "string",
-            "format": "date-time"
+          "isRead": {
+            "type": "boolean",
+            "default": false
           }
         },
         "required": [
-          "id",
+          "userId",
           "type",
-          "message",
-          "timestamp"
+          "message"
         ]
       },
       "UpdateNotificationDto": {
         "type": "object",
         "properties": {
           "isRead": {
-            "type": "boolean",
-            "description": "Mark notification as read or unread"
+            "type": "boolean"
           },
           "message": {
             "type": "string",
-            "maxLength": 255,
-            "description": "Updated notification message"
+            "maxLength": 500
           },
           "type": {
             "type": "string",
             "enum": [
-              "part_arrival",
-              "part_available",
-              "general"
-            ],
-            "description": "Updated notification type"
+              "PART_AVAILABLE",
+              "PART_REMOVED",
+              "PART_CLAIMED",
+              "PART_COLLECTED",
+              "GENERAL"
+            ]
           },
           "metadata": {
             "type": "object",
-            "description": "Additional metadata for notification"
+            "additionalProperties": true,
+            "description": "Arbitrary metadata payload"
           }
         }
       }

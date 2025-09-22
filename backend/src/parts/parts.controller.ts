@@ -1,5 +1,3 @@
-// src/parts/parts.controller.ts
-
 import {
   Controller,
   Get,
@@ -210,6 +208,25 @@ export class PartsController {
       req.user.email,
       reason,
     )
+    return new PartResponseDto(part)
+  }
+
+  @Post(':id/collect')
+  @Roles(Role.ENGINEER)
+  @ApiTags('Parts', 'Collections')
+  @ApiOperation({ summary: 'Mark a claimed part as collected' })
+  @ApiParam({ name: 'id', type: String, description: 'Part UUID' })
+  @ApiResponse({ status: 200, description: 'Part collected', type: PartResponseDto })
+  @ApiResponse({ status: 400, type: ErrorResponseDto, description: 'Validation error' })
+  @ApiResponse({ status: 401, type: ErrorResponseDto, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, type: ErrorResponseDto, description: 'Forbidden' })
+  @ApiResponse({ status: 404, type: ErrorResponseDto, description: 'Part not found' })
+  @HttpCode(HttpStatus.OK)
+  async collectPart(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Request() req: any,
+  ): Promise<PartResponseDto> {
+    const part = await this.partsService.collectPart(id, req.user.sub)
     return new PartResponseDto(part)
   }
 }

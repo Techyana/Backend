@@ -1,41 +1,51 @@
+// src/notifications/notification.entity.ts
+
 import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
   ManyToOne,
+  JoinColumn,
+  Index,
 } from 'typeorm'
-import { ApiProperty } from '@nestjs/swagger'
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
 import { User } from '../users/user.entity'
 import { NotificationType } from './notification-type.enum'
 
 @Entity({ name: 'notifications' })
 export class Notification {
-  @ApiProperty({ example: 'uuid-string' })
+  @ApiProperty({ description: 'Notification UUID' })
   @PrimaryGeneratedColumn('uuid')
   id: string
 
-  @ApiProperty({ type: () => User })
-  @ManyToOne(() => User, (user) => user.notifications, { onDelete: 'CASCADE' })
+  @ApiProperty({ description: 'Recipient user', type: () => User })
+  @ManyToOne(() => User, (user) => user.notifications, {
+    eager: true,
+    onDelete: 'CASCADE',
+    nullable: false,
+  })
+  @JoinColumn({ name: 'user_id' })
+  @Index()
   user: User
 
-  @ApiProperty({ example: 'Part D009-1234 has arrived.' })
-  @Column({ type: 'text' })
+  @ApiProperty({ description: 'Message body' })
+  @Column('text')
   message: string
 
-  @ApiProperty({ enum: NotificationType, example: NotificationType.PART_ARRIVAL })
-  @Column({ type: 'enum', enum: NotificationType })
+  @ApiProperty({ description: 'Notification category', enum: NotificationType })
+  @Column({ type: 'enum', enum: NotificationType, enumName: 'notifications_type_enum', default: NotificationType.GENERAL })
   type: NotificationType
 
-  @ApiProperty({ example: false })
-  @Column({ default: false })
-  isRead: boolean
-
-  @ApiProperty({ example: '{"partId":"uuid-string"}', required: false })
+  @ApiPropertyOptional({ description: 'Arbitrary metadata payload' })
   @Column({ type: 'jsonb', nullable: true })
   metadata?: Record<string, any>
 
-  @ApiProperty({ example: '2024-09-13T10:00:00Z' })
+  @ApiProperty({ description: 'Read status', default: false })
+  @Column({ type: 'boolean', default: false, name: 'is_read' })
+  isRead: boolean
+
+  @ApiProperty({ description: 'Creation timestamp', format: 'date-time' })
   @CreateDateColumn({ name: 'timestamp', type: 'timestamptz' })
   timestamp: Date
 }
