@@ -6,6 +6,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { TransactionsModule } from './transactions/transactions.module';
 import { MailModule } from './mail/mail.module';
 import { PartsModule } from './parts/parts.module';
 import { join } from 'path';
@@ -41,6 +42,7 @@ import { join } from 'path';
     MailModule,
     PartsModule,
     NotificationsModule,
+    TransactionsModule,
   ],
 })
 export class AppModule {}

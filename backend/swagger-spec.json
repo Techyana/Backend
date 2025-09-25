@@ -1017,6 +1017,197 @@
           "Notifications"
         ]
       }
+    },
+    "/transactions": {
+      "post": {
+        "operationId": "TransactionsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTransactionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new part transaction",
+        "tags": [
+          "transactions"
+        ]
+      },
+      "get": {
+        "operationId": "TransactionsController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TransactionResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get all part transactions",
+        "tags": [
+          "transactions"
+        ]
+      }
+    },
+    "/transactions/recent": {
+      "get": {
+        "operationId": "TransactionsController_getRecent",
+        "parameters": [
+          {
+            "name": "hours",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 12,
+              "type": "number"
+            }
+          },
+          {
+            "name": "types",
+            "required": false,
+            "in": "query",
+            "description": "Comma-separated transaction types (e.g. claim,collect,request)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TransactionResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get recent transactions by hours and types",
+        "tags": [
+          "transactions"
+        ]
+      }
+    },
+    "/transactions/collected": {
+      "get": {
+        "operationId": "TransactionsController_getRecentCollections",
+        "parameters": [
+          {
+            "name": "hours",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 12,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TransactionResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get recent collected transactions by hours",
+        "tags": [
+          "transactions"
+        ]
+      }
+    },
+    "/transactions/{id}": {
+      "get": {
+        "operationId": "TransactionsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Transaction UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a part transaction by ID",
+        "tags": [
+          "transactions"
+        ]
+      }
     }
   },
   "info": {
@@ -1365,6 +1556,91 @@
             "description": "Arbitrary metadata payload"
           }
         }
+      },
+      "CreateTransactionDto": {
+        "type": "object",
+        "properties": {
+          "partId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "CLAIM",
+              "REQUEST",
+              "RETURN",
+              "COLLECT",
+              "ADD"
+            ]
+          },
+          "quantityDelta": {
+            "type": "number",
+            "minimum": 1
+          },
+          "details": {
+            "type": "string",
+            "description": "Optional notes/details"
+          }
+        },
+        "required": [
+          "partId",
+          "userId",
+          "type",
+          "quantityDelta"
+        ]
+      },
+      "Part": {
+        "type": "object",
+        "properties": {}
+      },
+      "User": {
+        "type": "object",
+        "properties": {}
+      },
+      "TransactionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "part": {
+            "$ref": "#/components/schemas/Part"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "CLAIM",
+              "REQUEST",
+              "RETURN",
+              "COLLECT",
+              "ADD"
+            ]
+          },
+          "user": {
+            "$ref": "#/components/schemas/User"
+          },
+          "quantityDelta": {
+            "type": "number"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "part",
+          "type",
+          "user",
+          "quantityDelta",
+          "createdAt"
+        ]
       }
     }
   }

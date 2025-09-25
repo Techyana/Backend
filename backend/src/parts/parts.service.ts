@@ -32,7 +32,6 @@ export class PartsService {
     })
     const saved = await this.partRepo.save(part)
 
-    // Notify all engineers about a new available part
     const engineers = await this.userRepo.find({ where: { role: Role.ENGINEER } })
     await Promise.all(
       engineers.map((eng) =>
@@ -49,7 +48,7 @@ export class PartsService {
   }
 
   async findAll(): Promise<Part[]> {
-    return this.partRepo.find({ relations: ['claimedBy'] , order: { createdAtTimestamp: 'DESC' } })
+    return this.partRepo.find({ relations: ['claimedBy'], order: { createdAtTimestamp: 'DESC' } })
   }
 
   async findByStatus(status: PartStatus): Promise<Part[]> {
@@ -64,12 +63,9 @@ export class PartsService {
 
   async update(id: string, dto: UpdatePartDto): Promise<Part> {
     const part = await this.findOne(id)
-
-    // Prevent editing a collected part
     if (part.collected) {
       throw new ForbiddenException('Collected parts cannot be updated')
     }
-
     Object.assign(part, dto)
     await this.partRepo.save(part)
     return this.findOne(id)
@@ -79,14 +75,12 @@ export class PartsService {
     const part = await this.findOne(id)
     await this.dataSource.transaction(async (manager) => {
       await manager.remove(Part, part)
-
-      // Notify all engineers about removal
       const engineers = await manager.getRepository(User).find({ where: { role: Role.ENGINEER } })
       await Promise.all(
         engineers.map((eng) =>
           this.notifications.create({
             userId: eng.id,
-            type: NotificationType.GENERAL,
+            type: NotificationType.PART_REMOVED,
             message: `Part removed: ${part.name} (${part.partNumber})`,
             metadata: { partId: part.id, reason: reason || 'No reason provided', removedBy: performedByEmail },
           }),
@@ -95,14 +89,12 @@ export class PartsService {
     })
   }
 
-  // Engineer requests a part (optional flow)
   async requestPart(id: string, userId: string): Promise<Part> {
     const [part, user] = await Promise.all([this.findOne(id), this.userRepo.findOne({ where: { id: userId } })])
     if (!user) throw new NotFoundException('User not found')
     if (part.status !== PartStatus.AVAILABLE) throw new BadRequestException('Part not available to request')
 
     return await this.dataSource.transaction(async (manager) => {
-      // Record transaction
       const tx = manager.create(PartTransaction, {
         part,
         user,
@@ -111,8 +103,6 @@ export class PartsService {
         details: `Requested by ${user.email}`,
       })
       await manager.save(tx)
-
-      // Optionally notify admins about the request
       const admins = await manager.getRepository(User).find({ where: [{ role: Role.ADMIN }, { role: Role.SUPERVISOR }] })
       await Promise.all(
         admins.map((admin) =>
@@ -124,56 +114,61 @@ export class PartsService {
           }),
         ),
       )
-
       return this.findOne(id)
     })
   }
 
-  // Engineer claims a part
   async claimPart(id: string, userId: string): Promise<Part> {
-    const [part, user] = await Promise.all([this.findOne(id), this.userRepo.findOne({ where: { id: userId } })])
+    const [part, user] = await Promise.all([
+      this.partRepo.findOne({ where: { id }, relations: ['claimedBy'] }),
+      this.userRepo.findOne({ where: { id: userId } }),
+    ])
     if (!user) throw new NotFoundException('User not found')
+    if (!part) throw new NotFoundException('Part not found')
     if (part.status !== PartStatus.AVAILABLE) throw new BadRequestException('Part not available to claim')
+    if (part.quantity < 1) throw new BadRequestException('No stock available')
 
     return await this.dataSource.transaction(async (manager) => {
+      part.quantity -= 1
+      part.status = PartStatus.PENDING_COLLECTION
       part.claimedById = user.id
       part.claimedAt = new Date()
-      // Move out of "Available" queue
-      // If you have PENDING_COLLECTION in PartStatus, prefer that; fallback to CLAIMED
-      part.status = (PartStatus as any).PENDING_COLLECTION ?? PartStatus.CLAIMED
-
       await manager.save(part)
 
       const tx = manager.create(PartTransaction, {
         part,
         user,
         type: PartTransactionType.CLAIM,
-        quantityDelta: 0,
+        quantityDelta: -1,
         details: `Claimed by ${user.email}`,
       })
       await manager.save(tx)
 
-      // Optionally notify admins about claims
       const admins = await manager.getRepository(User).find({ where: [{ role: Role.ADMIN }, { role: Role.SUPERVISOR }] })
       await Promise.all(
         admins.map((admin) =>
           this.notifications.create({
             userId: admin.id,
-            type: NotificationType.GENERAL,
+            type: NotificationType.PART_CLAIMED,
             message: `Part claimed: ${part.name} (${part.partNumber}) by ${user.name}`,
-            metadata: { partId: part.id, claimedAt: part.claimedAt },
+            metadata: { partId: part.id, claimedAt: part.claimedAt, claimedByName: user.name },
           }),
         ),
       )
 
-      return this.findOne(id)
+      const updatedPart = await this.partRepo.findOne({ where: { id: part.id }, relations: ['claimedBy'] })
+      if (!updatedPart) throw new NotFoundException('Part not found after claim')
+      return updatedPart
     })
   }
 
-  // Engineer returns a claimed part (un-claim)
   async returnPart(id: string, userId: string, userEmail: string, reason?: string): Promise<Part> {
-    const [part, user] = await Promise.all([this.findOne(id), this.userRepo.findOne({ where: { id: userId } })])
+    const [part, user] = await Promise.all([
+      this.partRepo.findOne({ where: { id }, relations: ['claimedBy'] }),
+      this.userRepo.findOne({ where: { id: userId } }),
+    ])
     if (!user) throw new NotFoundException('User not found')
+    if (!part) throw new NotFoundException('Part not found')
     if (!part.claimedById) throw new BadRequestException('Part is not claimed')
     if (part.claimedById !== user.id) throw new ForbiddenException('You did not claim this part')
 
@@ -184,19 +179,18 @@ export class PartsService {
       part.collected = false
       part.collectedAt = null
       part.status = PartStatus.AVAILABLE
-
+      part.quantity += 1
       await manager.save(part)
 
       const tx = manager.create(PartTransaction, {
         part,
         user,
         type: PartTransactionType.RETURN,
-        quantityDelta: 0,
+        quantityDelta: 1,
         details: `Returned by ${userEmail}${reason ? `: ${reason}` : ''}`,
       })
       await manager.save(tx)
 
-      // Notify admins the claim was returned
       const admins = await manager.getRepository(User).find({ where: [{ role: Role.ADMIN }, { role: Role.SUPERVISOR }] })
       await Promise.all(
         admins.map((admin) =>
@@ -209,14 +203,19 @@ export class PartsService {
         ),
       )
 
-      return this.findOne(id)
+      const updatedPart = await this.partRepo.findOne({ where: { id: part.id }, relations: ['claimedBy'] })
+      if (!updatedPart) throw new NotFoundException('Part not found after return')
+      return updatedPart
     })
   }
 
-  // Engineer confirms collection
   async collectPart(id: string, userId: string): Promise<Part> {
-    const [part, user] = await Promise.all([this.findOne(id), this.userRepo.findOne({ where: { id: userId } })])
+    const [part, user] = await Promise.all([
+      this.partRepo.findOne({ where: { id }, relations: ['claimedBy'] }),
+      this.userRepo.findOne({ where: { id: userId } }),
+    ])
     if (!user) throw new NotFoundException('User not found')
+    if (!part) throw new NotFoundException('Part not found')
     if (!part.claimedById) throw new BadRequestException('Part must be claimed before collection')
     if (part.claimedById !== user.id) throw new ForbiddenException('You did not claim this part')
     if (part.collected) throw new BadRequestException('Part already collected')
@@ -224,34 +223,33 @@ export class PartsService {
     return await this.dataSource.transaction(async (manager) => {
       part.collected = true
       part.collectedAt = new Date()
-      // Optional: keep status as CLAIMED or mark as a dedicated collected state if exists
-      part.status = (PartStatus as any).COLLECTED ?? part.status
-
+      part.status = PartStatus.COLLECTED
       await manager.save(part)
 
       const tx = manager.create(PartTransaction, {
         part,
         user,
         type: PartTransactionType.COLLECT,
-        quantityDelta: -1, // reflects stock movement; adjust per your policy
+        quantityDelta: 0, // Already decremented on claim
         details: `Collected by ${user.email}`,
       })
       await manager.save(tx)
 
-      // Notify admins about collection with claimedByName and claimedAt
       const admins = await manager.getRepository(User).find({ where: [{ role: Role.ADMIN }, { role: Role.SUPERVISOR }] })
       await Promise.all(
         admins.map((admin) =>
           this.notifications.create({
             userId: admin.id,
-            type: NotificationType.GENERAL,
+            type: NotificationType.PART_COLLECTED,
             message: `Part collected: ${part.name} by ${user.name}`,
             metadata: { partId: part.id, claimedAt: part.claimedAt, collectedAt: part.collectedAt, claimedByName: user.name },
           }),
         ),
       )
 
-      return this.findOne(id)
+      const updatedPart = await this.partRepo.findOne({ where: { id: part.id }, relations: ['claimedBy'] })
+      if (!updatedPart) throw new NotFoundException('Part not found after collect')
+      return updatedPart
     })
   }
 }

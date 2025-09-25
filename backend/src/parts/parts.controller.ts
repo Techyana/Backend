@@ -155,6 +155,7 @@ export class PartsController {
     @Param('id', new ParseUUIDPipe()) id: string,
     @Request() req: any,
   ): Promise<PartResponseDto> {
+    console.log('Authenticated user:', req.user);
     const part = await this.partsService.claimPart(id, req.user.sub)
     return new PartResponseDto(part)
   }
