@@ -1,9 +1,9 @@
-import { IsOptional, IsString, IsInt } from 'class-validator';
+import { IsOptional, IsString, IsInt, IsArray } from 'class-validator';
 
 export class UpdateTonerDto {
   @IsOptional()
   @IsString()
-  edp?: string;
+  edpCode?: string;
 
   @IsOptional()
   @IsString()
@@ -11,11 +11,11 @@ export class UpdateTonerDto {
 
   @IsOptional()
   @IsString()
-  deviceModel?: string;
+  model?: string;
 
   @IsOptional()
   @IsInt()
-  quantity?: number;
+  stock?: number;
 
   @IsOptional()
   @IsInt()
@@ -24,4 +24,9 @@ export class UpdateTonerDto {
   @IsOptional()
   @IsString()
   from?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  forDeviceModels?: string[];
 }

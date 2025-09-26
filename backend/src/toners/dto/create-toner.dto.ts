@@ -1,17 +1,17 @@
-import { IsString, IsInt, IsOptional } from 'class-validator';
+import { IsString, IsInt, IsOptional, IsArray } from 'class-validator';
 
 export class CreateTonerDto {
   @IsString()
-  edp: string;
+  edpCode: string;
 
   @IsString()
   color: string;
 
   @IsString()
-  deviceModel: string;
+  model: string;
 
   @IsInt()
-  quantity: number;
+  stock: number;
 
   @IsOptional()
   @IsInt()
@@ -19,4 +19,8 @@ export class CreateTonerDto {
 
   @IsString()
   from: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  forDeviceModels: string[];
 }

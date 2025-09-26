@@ -28,7 +28,7 @@ export class Toner {
   @Column({ name: 'stock' })
   stock: number;
 
-  @Column({ name: 'for_device_models', type: 'simple-array' })
+  @Column({ name: 'for_device_models', type: 'text', array: true })
   forDeviceModels: string[];
 
   @Column({ name: 'from' })

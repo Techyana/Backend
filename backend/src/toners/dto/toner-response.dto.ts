@@ -2,25 +2,28 @@ import { Expose } from 'class-transformer';
 
 export class TonerResponseDto {
   @Expose()
-  id: number;
+  id: string;
 
   @Expose()
-  edp: string;
+  edpCode: string;
 
   @Expose()
   color: string;
 
   @Expose()
-  deviceModel: string;
+  model: string;
 
   @Expose()
-  quantity: number;
+  stock: number;
 
   @Expose()
   yield?: number;
 
   @Expose()
   from: string;
+
+  @Expose()
+  forDeviceModels: string[];
 
   @Expose()
   claimedBy?: string;

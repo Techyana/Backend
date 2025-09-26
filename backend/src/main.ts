@@ -1,5 +1,3 @@
-// src/main.ts
-
 import * as dotenv from 'dotenv';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
@@ -31,7 +29,7 @@ async function bootstrap() {
 
   // Cookie-safe CORS
   app.enableCors({
-    origin: ['https://ricohworkshopportal.co.za', 'http://localhost:5173',],
+    origin: ['https://ricohworkshopportal.co.za', 'http://localhost:5173'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Authorization', 'Content-Type', 'X-Requested-With', 'Cache-Control'],
@@ -43,15 +41,9 @@ async function bootstrap() {
   );
   app.useGlobalFilters(new AllExceptionsFilter());
 
-  // Stub out unfinished APIs with 503 Service Unavailable
-  const unavailable = ['toners', 'copiers', 'notifications'];
-  unavailable.forEach((svc) => {
-    app.use(`/${svc}`, (_req, res) => {
-      res.status(HttpStatus.SERVICE_UNAVAILABLE).json({
-        statusCode: HttpStatus.SERVICE_UNAVAILABLE,
-        message: `${svc.charAt(0).toUpperCase() + svc.slice(1)} service is not available yet.`,
-      });
-    });
+  // Stub /notifications API to always return 200 OK with empty array
+  app.use('/notifications', (_req, res) => {
+    res.status(HttpStatus.OK).json([]);
   });
 
   // Swagger setup
@@ -82,8 +74,7 @@ async function bootstrap() {
 
   const port = process.env.PORT || 3001;
   await app.listen(port, '0.0.0.0');
-  console.log(`🚀 Server up on http://0.0.0.0:${port}`,
-);
+  console.log(`🚀 Server up on http://0.0.0.0:${port}`);
 }
 
 bootstrap();
