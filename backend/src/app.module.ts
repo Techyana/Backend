@@ -9,6 +9,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { MailModule } from './mail/mail.module';
 import { PartsModule } from './parts/parts.module';
+import { TonersModule } from './toners/toners.module';
 import { join } from 'path';
 
 @Module({
@@ -43,6 +44,7 @@ import { join } from 'path';
     PartsModule,
     NotificationsModule,
     TransactionsModule,
+    TonersModule,
   ],
 })
 export class AppModule {}

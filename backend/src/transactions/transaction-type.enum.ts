@@ -1,6 +1,6 @@
 // src/transactions/transaction-type.enum.ts
 
-export enum PartTransactionType {
+export enum TransactionType {
   CLAIM = 'CLAIM',
   REQUEST = 'REQUEST',
   RETURN = 'RETURN',

@@ -1,4 +1,4 @@
-// src/transactions/part-transaction.entity.ts
+// src/transactions/toner-transaction.entity.ts
 
 import {
   Entity,
@@ -8,17 +8,17 @@ import {
   CreateDateColumn,
   Index,
 } from 'typeorm'
-import { Part } from '../parts/part.entity'
+import { Toner } from '../toners/toner.entity'
 import { User } from '../users/user.entity'
 import { TransactionType } from './transaction-type.enum'
 
-@Entity({ name: 'part_transactions' })
-export class PartTransaction {
+@Entity({ name: 'toner_transactions' })
+export class TonerTransaction {
   @PrimaryGeneratedColumn('uuid')
   id: string
 
   @Index()
-  @Column({ type: 'enum', enum: TransactionType, enumName: 'part_transactions_type_enum' })
+  @Column({ type: 'enum', enum: TransactionType, enumName: 'toner_transactions_type_enum' })
   type: TransactionType
 
   // Positive for stock increases, negative for decreases
@@ -31,11 +31,11 @@ export class PartTransaction {
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date
 
-  @ManyToOne(() => Part, (part) => part.transactions, {
+  @ManyToOne(() => Toner, (toner) => toner.transactions, {
     onDelete: 'CASCADE',
     eager: false,
   })
-  part: Part
+  toner: Toner
 
   @ManyToOne(() => User, { eager: true })
   user: User

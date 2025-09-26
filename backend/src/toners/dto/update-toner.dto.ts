@@ -1,4 +1,27 @@
-import { PartialType } from '@nestjs/swagger';
-import { CreateTonerDto } from './create-toner.dto';
+import { IsOptional, IsString, IsInt } from 'class-validator';
 
-export class UpdateTonerDto extends PartialType(CreateTonerDto) {}
+export class UpdateTonerDto {
+  @IsOptional()
+  @IsString()
+  edp?: string;
+
+  @IsOptional()
+  @IsString()
+  color?: string;
+
+  @IsOptional()
+  @IsString()
+  deviceModel?: string;
+
+  @IsOptional()
+  @IsInt()
+  quantity?: number;
+
+  @IsOptional()
+  @IsInt()
+  yield?: number;
+
+  @IsOptional()
+  @IsString()
+  from?: string;
+}

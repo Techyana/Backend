@@ -65,14 +65,16 @@ export class NotificationsController {
   }
 
   @Patch(':id')
-  @Roles(Role.ADMIN)
-  @ApiOperation({ summary: 'Admin: update a notification' })
+  @ApiOperation({ summary: 'Update a notification (read status, message, etc.)' })
   @ApiResponse({ status: 200, type: NotificationResponseDto })
   async update(
     @Param('id') id: string,
     @Body() dto: UpdateNotificationDto,
+    @Request() req,
   ) {
-    const n = await this.notificationService.update(id, dto)
+    // Only admins can update message/type/metadata; users can mark as read
+    const isAdmin = req.user.role === Role.ADMIN
+    const n = await this.notificationService.update(id, dto, isAdmin)
     return new NotificationResponseDto(n)
   }
 

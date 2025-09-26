@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { Notification } from './notification.entity'
@@ -23,16 +23,14 @@ export class NotificationService {
       throw new NotFoundException(`User ${createDto.userId} not found`)
     }
 
-    // Persist notification
     const notification = this.notificationRepository.create({
       user,
       message: createDto.message,
       type: createDto.type,
-      // If you later add metadata/isRead columns, map them here as well.
-    } as Notification)
+      metadata: createDto.metadata,
+      isRead: createDto.isRead ?? false,
+    })
     const saved = await this.notificationRepository.save(notification)
-
-    // Emit to user's room over WebSocket
     this.gateway.sendNotification(user.id, saved)
     return saved
   }
@@ -57,13 +55,27 @@ export class NotificationService {
     return notification
   }
 
-  async update(id: string, updateDto: UpdateNotificationDto): Promise<Notification> {
+  async update(id: string, updateDto: UpdateNotificationDto, isAdmin: boolean): Promise<Notification> {
     const notification = await this.findOne(id)
-    // Only update fields that exist on the entity
-    if (typeof updateDto.message !== 'undefined') notification.message = updateDto.message
-    if (typeof updateDto.type !== 'undefined') notification.type = updateDto.type as any
-    // If you add isRead/metadata columns in the entity, map them here too.
-    return this.notificationRepository.save(notification)
+    // Users can only mark as read; admins can update all fields
+    if (typeof updateDto.isRead !== 'undefined') notification.isRead = updateDto.isRead
+    if (isAdmin) {
+      if (typeof updateDto.message !== 'undefined') notification.message = updateDto.message
+      if (typeof updateDto.type !== 'undefined') notification.type = updateDto.type
+      if (typeof updateDto.metadata !== 'undefined') notification.metadata = updateDto.metadata
+    } else {
+      // Prevent non-admins from updating other fields
+      if (
+        typeof updateDto.message !== 'undefined' ||
+        typeof updateDto.type !== 'undefined' ||
+        typeof updateDto.metadata !== 'undefined'
+      ) {
+        throw new ForbiddenException('Only admins can update message, type, or metadata')
+      }
+    }
+    const saved = await this.notificationRepository.save(notification)
+    this.gateway.sendNotification(notification.user.id, saved)
+    return saved
   }
 
   async remove(id: string): Promise<void> {

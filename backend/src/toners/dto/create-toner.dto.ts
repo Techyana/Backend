@@ -1,33 +1,22 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsEnum, IsInt, Min, IsArray, ArrayNotEmpty } from 'class-validator';
-import { TonerColor } from '../toner-color.enum';
+import { IsString, IsInt, IsOptional } from 'class-validator';
 
 export class CreateTonerDto {
-  @ApiProperty({ type: String, description: 'Model name of the toner' })
   @IsString()
-  model: string;
+  edp: string;
 
-  @ApiProperty({ type: String, description: 'EDP code of the toner' })
   @IsString()
-  edpCode: string;
+  color: string;
 
-  @ApiProperty({ enum: TonerColor, description: 'Color of the toner' })
-  @IsEnum(TonerColor)
-  color: TonerColor;
+  @IsString()
+  deviceModel: string;
 
-  @ApiProperty({ type: Number, description: 'Page yield of the toner' })
   @IsInt()
-  @Min(1)
-  yield: number;
+  quantity: number;
 
-  @ApiProperty({ type: Number, description: 'Initial stock count' })
+  @IsOptional()
   @IsInt()
-  @Min(0)
-  stock: number;
+  yield?: number;
 
-  @ApiProperty({ type: [String], description: 'Compatible device models' })
-  @IsArray()
-  @ArrayNotEmpty()
-  @IsString({ each: true })
-  forDeviceModels: string[];
+  @IsString()
+  from: string;
 }

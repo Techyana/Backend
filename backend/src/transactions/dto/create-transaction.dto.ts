@@ -1,5 +1,3 @@
-// src/transactions/dto/create-transaction.dto.ts
-
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
 import {
   IsString,
@@ -8,21 +6,30 @@ import {
   IsInt,
   Min,
   IsOptional,
+  ValidateIf,
 } from 'class-validator'
-import { PartTransactionType } from '../transaction-type.enum'
+import { TransactionType } from '../transaction-type.enum'
 
 export class CreateTransactionDto {
-  @ApiProperty({ type: String, format: 'uuid' })
+  @ApiProperty({ type: String, format: 'uuid', required: false })
+  @ValidateIf(o => !o.tonerId)
   @IsUUID()
-  partId: string
+  @IsOptional()
+  partId?: string
+
+  @ApiProperty({ type: String, format: 'uuid', required: false })
+  @ValidateIf(o => !o.partId)
+  @IsUUID()
+  @IsOptional()
+  tonerId?: string
 
   @ApiProperty({ type: String, format: 'uuid' })
   @IsUUID()
   userId: string
 
-  @ApiProperty({ enum: PartTransactionType })
-  @IsEnum(PartTransactionType)
-  type: PartTransactionType
+  @ApiProperty({ enum: TransactionType })
+  @IsEnum(TransactionType)
+  type: TransactionType
 
   @ApiProperty({ type: Number, minimum: 1 })
   @IsInt()

@@ -1,33 +1,48 @@
-// src/toners/dto/toner-response.dto.ts
-
-import { ApiProperty } from '@nestjs/swagger'
-import { TonerColor } from '../toner-color.enum'
+import { Expose } from 'class-transformer';
 
 export class TonerResponseDto {
-  @ApiProperty({ type: String, format: 'uuid' })
-  id: string
+  @Expose()
+  id: number;
 
-  @ApiProperty()
-  model: string
+  @Expose()
+  edp: string;
 
-  @ApiProperty()
-  edpCode: string
+  @Expose()
+  color: string;
 
-  @ApiProperty({ enum: TonerColor })
-  color: TonerColor
+  @Expose()
+  deviceModel: string;
 
-  @ApiProperty({ type: Number })
-  yield: number
+  @Expose()
+  quantity: number;
 
-  @ApiProperty({ type: Number })
-  stock: number
+  @Expose()
+  yield?: number;
 
-  @ApiProperty({ type: [String] })
-  forDeviceModels: string[]
+  @Expose()
+  from: string;
 
-  @ApiProperty({ type: String, format: 'date-time' })
-  createdAtTimestamp: Date
+  @Expose()
+  claimedBy?: string;
 
-  @ApiProperty({ type: String, format: 'date-time' })
-  updatedAtTimestamp: Date
+  @Expose()
+  claimedAt?: Date;
+
+  @Expose()
+  clientName?: string;
+
+  @Expose()
+  serialNumber?: string;
+
+  @Expose()
+  collectedBy?: string;
+
+  @Expose()
+  collectedAt?: Date;
+
+  @Expose()
+  createdAt: Date;
+
+  @Expose()
+  updatedAt: Date;
 }

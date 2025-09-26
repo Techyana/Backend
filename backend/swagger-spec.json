@@ -206,9 +206,7 @@
         ],
         "summary": "Create a new part",
         "tags": [
-          "Parts",
-          "Parts",
-          "Admin"
+          "Parts"
         ]
       },
       "get": {
@@ -256,9 +254,7 @@
         ],
         "summary": "Retrieve all parts",
         "tags": [
-          "Parts",
-          "Parts",
-          "Read"
+          "Parts"
         ]
       }
     },
@@ -335,9 +331,7 @@
         ],
         "summary": "Retrieve a part by its UUID",
         "tags": [
-          "Parts",
-          "Parts",
-          "Read"
+          "Parts"
         ]
       },
       "put": {
@@ -422,9 +416,7 @@
         ],
         "summary": "Update a part by its UUID",
         "tags": [
-          "Parts",
-          "Parts",
-          "Admin"
+          "Parts"
         ]
       },
       "delete": {
@@ -508,9 +500,7 @@
         ],
         "summary": "Delete a part by its UUID, with reason",
         "tags": [
-          "Parts",
-          "Parts",
-          "Admin"
+          "Parts"
         ]
       }
     },
@@ -985,7 +975,7 @@
             "bearer": []
           }
         ],
-        "summary": "Admin: update a notification",
+        "summary": "Update a notification (read status, message, etc.)",
         "tags": [
           "Notifications"
         ]
@@ -1049,7 +1039,7 @@
             "bearer": []
           }
         ],
-        "summary": "Create a new part transaction",
+        "summary": "Create a new transaction (part or toner)",
         "tags": [
           "transactions"
         ]
@@ -1077,7 +1067,7 @@
             "bearer": []
           }
         ],
-        "summary": "Get all part transactions",
+        "summary": "Get all transactions (part and toner)",
         "tags": [
           "transactions"
         ]
@@ -1203,9 +1193,166 @@
             "bearer": []
           }
         ],
-        "summary": "Get a part transaction by ID",
+        "summary": "Get a transaction by ID (part or toner)",
         "tags": [
           "transactions"
+        ]
+      }
+    },
+    "/toners": {
+      "post": {
+        "operationId": "TonersController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTonerDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Toners"
+        ]
+      },
+      "get": {
+        "operationId": "TonersController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Toners"
+        ]
+      }
+    },
+    "/toners/{id}": {
+      "get": {
+        "operationId": "TonersController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Toners"
+        ]
+      },
+      "patch": {
+        "operationId": "TonersController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTonerDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Toners"
+        ]
+      },
+      "delete": {
+        "operationId": "TonersController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Toners"
+        ]
+      }
+    },
+    "/toners/{id}/claim": {
+      "patch": {
+        "operationId": "TonersController_claimToner",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Toners"
+        ]
+      }
+    },
+    "/toners/{id}/collect": {
+      "patch": {
+        "operationId": "TonersController_collectToner",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Toners"
         ]
       }
     }
@@ -1564,6 +1711,10 @@
             "type": "string",
             "format": "uuid"
           },
+          "tonerId": {
+            "type": "string",
+            "format": "uuid"
+          },
           "userId": {
             "type": "string",
             "format": "uuid"
@@ -1588,13 +1739,16 @@
           }
         },
         "required": [
-          "partId",
           "userId",
           "type",
           "quantityDelta"
         ]
       },
       "Part": {
+        "type": "object",
+        "properties": {}
+      },
+      "Toner": {
         "type": "object",
         "properties": {}
       },
@@ -1611,6 +1765,9 @@
           },
           "part": {
             "$ref": "#/components/schemas/Part"
+          },
+          "toner": {
+            "$ref": "#/components/schemas/Toner"
           },
           "type": {
             "type": "string",
@@ -1635,12 +1792,19 @@
         },
         "required": [
           "id",
-          "part",
           "type",
           "user",
           "quantityDelta",
           "createdAt"
         ]
+      },
+      "CreateTonerDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "UpdateTonerDto": {
+        "type": "object",
+        "properties": {}
       }
     }
   }

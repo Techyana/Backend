@@ -31,7 +31,7 @@ async function bootstrap() {
 
   // Cookie-safe CORS
   app.enableCors({
-    origin: ['https://ricohworkshopportal.co.za'],
+    origin: ['https://ricohworkshopportal.co.za', 'http://localhost:5173',],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Authorization', 'Content-Type', 'X-Requested-With', 'Cache-Control'],

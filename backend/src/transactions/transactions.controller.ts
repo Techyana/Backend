@@ -23,7 +23,7 @@ import { TransactionsService } from './transactions.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { TransactionResponseDto, RecentTransactionsQueryDto } from './dto/transaction-response.dto';
 import { JwtAuthGuard } from '../auth/jwt.guard';
-import { PartTransactionType } from './transaction-type.enum';
+import { TransactionType } from './transaction-type.enum';
 
 @ApiTags('transactions')
 @ApiBearerAuth()
@@ -35,7 +35,7 @@ export class TransactionsController {
 
   @Post()
   @UsePipes(new ValidationPipe({ transform: true }))
-  @ApiOperation({ summary: 'Create a new part transaction' })
+  @ApiOperation({ summary: 'Create a new transaction (part or toner)' })
   @ApiResponse({ status: 201, type: TransactionResponseDto })
   async create(@Body() body: CreateTransactionDto): Promise<TransactionResponseDto> {
     this.logger.log('Creating new transaction', JSON.stringify(body));
@@ -44,7 +44,7 @@ export class TransactionsController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all part transactions' })
+  @ApiOperation({ summary: 'Get all transactions (part and toner)' })
   @ApiResponse({ status: 200, type: [TransactionResponseDto] })
   async findAll(): Promise<TransactionResponseDto[]> {
     this.logger.log('Fetching all transactions');
@@ -60,13 +60,13 @@ export class TransactionsController {
   @ApiResponse({ status: 200, type: [TransactionResponseDto] })
   async getRecent(@Query() query: RecentTransactionsQueryDto): Promise<TransactionResponseDto[]> {
     this.logger.log(`Fetching recent transactions with filters`, JSON.stringify(query));
-    let typeArr: PartTransactionType[] | undefined = undefined;
+    let typeArr: TransactionType[] | undefined = undefined;
     if (query.types) {
       typeArr = query.types
         .split(',')
         .map((t: string) => t.trim().toUpperCase())
-        .filter((t: string) => Object.values(PartTransactionType).includes(t as PartTransactionType))
-        .map((t: string) => t as PartTransactionType);
+        .filter((t: string) => Object.values(TransactionType).includes(t as TransactionType))
+        .map((t: string) => t as TransactionType);
     }
     const txs = await this.transactionsService.findRecent(query.hours ?? 12, typeArr);
     return Array.isArray(txs) ? txs.map((t) => new TransactionResponseDto(t)) : [];
@@ -82,8 +82,8 @@ export class TransactionsController {
     return Array.isArray(txs) ? txs.map((t) => new TransactionResponseDto(t)) : [];
   }
 
-@Get(':id')
-  @ApiOperation({ summary: 'Get a part transaction by ID' })
+  @Get(':id')
+  @ApiOperation({ summary: 'Get a transaction by ID (part or toner)' })
   @ApiParam({ name: 'id', type: String, description: 'Transaction UUID' })
   @ApiResponse({ status: 200, type: TransactionResponseDto })
   async findOne(@Param('id') id: string): Promise<TransactionResponseDto> {
