@@ -40,4 +40,24 @@ export class CreateTransactionDto {
   @IsOptional()
   @IsString()
   details?: string
-}
+
+  @ApiPropertyOptional({ type: String })
+  @IsOptional()
+  @IsString()
+  clientName?: string
+
+  @ApiPropertyOptional({ type: String })
+  @IsOptional()
+  @IsString()
+  serialNumber?: string
+
+  @ApiPropertyOptional({ type: Number })
+  @IsOptional()
+  @IsInt()
+  monoTotal?: number
+
+  @ApiPropertyOptional({ type: Number })
+  @IsOptional()
+  @IsInt()
+  colorTotal?: number
+  }

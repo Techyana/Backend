@@ -28,6 +28,18 @@ export class TonerTransaction {
   @Column('text', { nullable: true })
   details?: string
 
+  @Column({ nullable: true })
+  clientName?: string
+
+  @Column({ nullable: true })
+  serialNumber?: string
+
+  @Column({ type: 'integer', nullable: true })
+  monoTotal?: number
+
+  @Column({ type: 'integer', nullable: true })
+  colorTotal?: number
+
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date
 

@@ -108,7 +108,19 @@ export class TransactionsService {
         type: dto.type,
         quantityDelta: dto.quantityDelta,
         details: dto.details,
+        clientName: dto.clientName,
+        serialNumber: dto.serialNumber,
+        monoTotal: dto.monoTotal,
+        colorTotal: dto.colorTotal,
       })
+      // Update current state on Toner entity if this is a CLAIM
+      if (dto.type === TransactionType.CLAIM) {
+        toner.claimedBy = user.name
+        toner.claimedAt = new Date()
+        toner.clientName = dto.clientName
+        toner.serialNumber = dto.serialNumber
+        await this.tonerRepo.save(toner)
+      }
       return this.tonerTransactionRepo.save(tx)
     } else {
       throw new NotFoundException('Either partId or tonerId must be provided')

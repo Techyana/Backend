@@ -7,6 +7,7 @@ import { Part } from './parts/part.entity';
 import { Device } from './devices/device.entity';
 import { Toner } from './toners/toner.entity';
 import { PartTransaction } from './transactions/part-transaction.entity';
+import { TonerTransaction } from './transactions/toner-transaction.entity';
 import { Notification } from './notifications/notification.entity';
 import { ActivityLog } from './activity-logs/activity-log.entity';
 import { StrippedPart } from './stripped-parts/stripped-part.entity';
@@ -27,6 +28,7 @@ const dataSourceOptions: PostgresConnectionOptions = {
   Device,
   Toner,
   PartTransaction,
+  TonerTransaction,
   Notification,
   ActivityLog,
   StrippedPart,
